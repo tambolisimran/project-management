@@ -224,6 +224,8 @@ export const updateTeam = async (id, teamData) => {
     }
   };
 
+
+
   export const addTeamMember = (data) => {
     const token = localStorage.getItem("token");
     return axios.post("http://localhost:8080/team-members/createTeamMember", data, {
@@ -232,10 +234,12 @@ export const updateTeam = async (id, teamData) => {
             "Content-Type": "application/json",
         },
     });
-};
+  };
+
 
 export const getAllMembers = async () => {
     const token = localStorage.getItem("token");
+    console.log("Retrieved Token:", token);
     try {
         const response = await axios.get("http://localhost:8080/team-members/getAllTeamMember", {
             headers: {
@@ -270,6 +274,27 @@ export const getMemberById = (id) => {
         },
     });  
 }
+
+export const updateMember = (id,member) => {
+    const token = localStorage.getItem("token");
+    return axios.get(`http://localhost:8080/team-members/updateTeamMember/${id}`,member, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });  
+}
+
+export const MakeLeader = (id) => {
+    const token = localStorage.getItem("token");
+    return axios.put(`http://localhost:8080/team-members/make-leader/${id}`, {
+        headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+    });  
+}
+
 
 export const addProject = (data) => {
     const token = localStorage.getItem("token");

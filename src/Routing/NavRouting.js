@@ -9,8 +9,8 @@ import Branch from '../Components/Branch'
 import Team from '../Components/Team'
 import AddTeamMember from '../Components/AddTeamMember'
 import Project from '../Components/Project';
-import Dashboard from '../Components/Dashboard'
 import AddTask from '../Components/AddTask'
+import Dashboard from '../Components/Dashboard'
 
 const NavRouting = () => {
   return (
@@ -25,9 +25,10 @@ const NavRouting = () => {
         <Route path='/branch' element={<Branch/>}/>
         <Route path='/team' element={<Team/>}/>
         <Route path='/team-member' element={<AddTeamMember/>}/>
+        <Route path="/update-member/:id" element={<AddTeamMember />} />
         <Route path='/project' element={<Project/>}/>
         <Route path="/create" element={<AddTask />} />
-        <Route path="/edit/:taskId" element={<AddTask />} />
+        <Route path="/update-task/:taskId" element={<AddTask />} />
       </Routes>
     </>
   )

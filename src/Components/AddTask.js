@@ -27,12 +27,12 @@ import { useNavigate } from "react-router-dom";
 import {deleteTask,addTask,getAllTask} from "../Services/APIServices"
 import Swal from "sweetalert2";
 
-const AddTask = ({ selectedTask, tasks = [] }) => {
+const AddTask = ({ selectedTask }) => {
   const initialTaskState = {
     description: "",
     projectName: "",
-    days: "",
-    hour: "",
+    days: 0,
+    hour: 0,
     status: "",
     statusBar: "",
     startDate: "",
@@ -40,7 +40,7 @@ const AddTask = ({ selectedTask, tasks = [] }) => {
     startTime: "",
     endTime: "",
     imageUrl: "",
-    durationInMinutes: "",
+    durationInMinutes: 0,
     subject: "",
     priority: "LOW",
     assignedTo: "",
@@ -48,6 +48,8 @@ const AddTask = ({ selectedTask, tasks = [] }) => {
   };
   const [open, setOpen] = useState(false);
   const [task, setTask] = useState(initialTaskState);
+  const [tasks, setTasks] = useState([]);  
+
   const [viewMode, setViewMode] = useState(false);
   const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -59,44 +61,68 @@ const AddTask = ({ selectedTask, tasks = [] }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setTask((prevTask) => ({
-      ...prevTask,
-      [name]: value,
-    }));
+    let updatedtask = { ...task, [name]: value };
+  
+    if (name === "days") {
+      updatedtask.hour = calculateHours(value);
+    }
+  
+    if (name === "startTime" || name === "endTime") {
+      updatedtask.durationInMinutes = calculateDurationInMinutes(updatedtask.startTime, updatedtask.endTime);
+    }
+  
+    setTask(updatedtask);
   };
+  
  
+  const calculateHours = (days) => {
+    return days * 8; 
+  };
 
+  const calculateDurationInMinutes = (start, end) => {
+    if (!start || !end) return 0;
+  
+    const startTime = new Date(`2025-01-01T${start}:00`);
+    const endTime = new Date(`2025-01-01T${end}:00`);
+  
+    if (endTime < startTime) return 0; 
+  
+    const diffInMs = endTime - startTime;
+    return Math.floor(diffInMs / 60000);
+  };
+  
   const fetchTasks = async () => {
-      try {
-        const response = await getAllTask();
-        setTask(response.data || []);
-      } catch (error) {
-        console.error("Error fetching task:", error);
-        Swal.fire("Error", "Failed to load task.", "error");
-      }
-    };
+    try {
+      const response = await getAllTask();  
+      setTasks(response.data || []);  
+    } catch (error) {
+      console.error("Error fetching tasks:", error);
+      Swal.fire("Error", "Failed to load tasks.", "error");
+    }
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpen(false);
     try {
-       const response =  await addTask(task);
-       console.log(response.data);
-       console.log("task added successfully",response.data.jwtToken)
-       fetchTasks();
-       setTask(initialTaskState);
-        Swal.fire("Success", "task added successfully!", "success");
+        const response = await addTask(task);
+        console.log(response.data);
+        fetchTasks();
+        Swal.fire("Success", "Task added successfully!", "success");
+
         if (response.data && response.data.token) {
-          localStorage.setItem("token", response.data.jwtToken);
-          console.log("Token stored:", localStorage.getItem("token"));
-      } else {
-          console.error("Token not found in response");
-      }
-      setShowForm(false);
-      }catch (error) {
-            console.error("Error adding task:", error);
-            Swal.fire("Error", "Failed to add task.", "error");
-          }
-    };
+            localStorage.setItem("token", response.data.jwtToken);
+            console.log("Token stored:", localStorage.setItem("token"));
+        } else {
+            console.error("Token not found in response");
+        }
+        
+    } catch (error) {
+        console.error("Error adding task:", error);
+        Swal.fire("Error", "Failed to add task.", "error");
+    }
+};
+
 
   const handleDelete = async (taskId) => {
         const result = await Swal.fire({
@@ -149,7 +175,7 @@ const AddTask = ({ selectedTask, tasks = [] }) => {
                 <TextField fullWidth label="Days" name="days" type="number" value={task.days} onChange={handleChange} required />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Hours" name="hour" type="number" value={task.hour} onChange={handleChange} required />
+                <TextField fullWidth label="Hours" name="hour" type="number" value={task.hour} onChange={handleChange}  InputProps={{ readOnly: true }} required />
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField fullWidth label="Status" name="status" value={task.status} onChange={handleChange} required />
@@ -173,7 +199,7 @@ const AddTask = ({ selectedTask, tasks = [] }) => {
                 <TextField fullWidth label="Image Url" name="imageUrl" value={task.imageUrl} onChange={handleChange} required />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Duration In Minutes" name="durationInMinutes" value={task.durationInMinutes} onChange={handleChange} required />
+                <TextField fullWidth label="Duration In Minutes" name="durationInMinutes" value={task.durationInMinutes} onChange={handleChange}  InputProps={{ readOnly: true }} required />
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField fullWidth label="Subject" name="subject" value={task.subject} onChange={handleChange} required />
@@ -255,19 +281,19 @@ const AddTask = ({ selectedTask, tasks = [] }) => {
               <Typography><strong>Description:</strong> {selectedTaskDetails.description}</Typography>
               <Typography><strong>Project Name:</strong> {selectedTaskDetails.projectName}</Typography>
               <Typography><strong>Days:</strong> {selectedTaskDetails.days}</Typography>
-              <Typography><strong>hour:</strong> {selectedTaskDetails.status}</Typography>
+              <Typography><strong>hour:</strong> {selectedTaskDetails.hour}</Typography>
               <Typography><strong>Status:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>statusBar:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>startDate:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>endDate:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>startTime:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>endTime:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>imageUrl:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>durationInMinutes:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>subject:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>priority:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>assignedTo:</strong> {selectedTaskDetails.status}</Typography>
-              <Typography><strong>assignedBy:</strong> {selectedTaskDetails.status}</Typography>
+              <Typography><strong>statusBar:</strong> {selectedTaskDetails.statusBar}</Typography>
+              <Typography><strong>startDate:</strong> {selectedTaskDetails.startDate}</Typography>
+              <Typography><strong>endDate:</strong> {selectedTaskDetails.endDate}</Typography>
+              <Typography><strong>startTime:</strong> {selectedTaskDetails.startTime}</Typography>
+              <Typography><strong>endTime:</strong> {selectedTaskDetails.endTime}</Typography>
+              <Typography><strong>Image Url:</strong> {selectedTaskDetails.imageUrl}</Typography>
+              <Typography><strong>durationInMinutes:</strong> {selectedTaskDetails.durationInMinutes}</Typography>
+              <Typography><strong>subject:</strong> {selectedTaskDetails.subject}</Typography>
+              <Typography><strong>priority:</strong> {selectedTaskDetails.priority}</Typography>
+              <Typography><strong>assignedTo:</strong> {selectedTaskDetails.assignedTo}</Typography>
+              <Typography><strong>assignedBy:</strong> {selectedTaskDetails.assignedBy}</Typography>
             </>
           )}
         </DialogContent>

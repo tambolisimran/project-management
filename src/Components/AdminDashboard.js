@@ -2,7 +2,6 @@ import React from "react";
 import { Box, Typography, Grid, Paper, List, ListItem, ListItemText, Chip } from "@mui/material";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
-// Sample Data for Task Status Chart
 const taskData = [
   { name: "Completed", value: 40, color: "#4caf50" },
   { name: "In Progress", value: 30, color: "#ff9800" },
@@ -10,7 +9,6 @@ const taskData = [
   { name: "On Hold", value: 10, color: "#2196f3" },
 ];
 
-// Sample Task List
 const tasks = [
   { id: 1, title: "Fix UI Bugs", status: "In Progress" },
   { id: 2, title: "API Integration", status: "Completed" },
@@ -26,7 +24,6 @@ const AdminDashboard = () => {
       </Typography>
 
       <Grid container spacing={3}>
-        {/* Task Status Chart */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ padding: 3 }}>
             <Typography variant="h6">Task Status Overview</Typography>
@@ -52,7 +49,6 @@ const AdminDashboard = () => {
           </Paper>
         </Grid>
 
-        {/* Task List */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ padding: 3 }}>
             <Typography variant="h6">Task List</Typography>

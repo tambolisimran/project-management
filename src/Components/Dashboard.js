@@ -1,8 +1,13 @@
 import { useState, useEffect } from "react";
-import { Container, Typography, Card, CardContent, Grid } from "@mui/material";
+import { Container, Typography, Card, CardContent, Grid, Box } from "@mui/material";
+import Sidebar from "./Sidebar"; 
+import AddTeamMember from "./AddTeamMember";
+import Project from "./Project";
 
 const Dashboard = () => {
     const [userRole, setUserRole] = useState("");
+    const [showAddTeamMember, setShowAddTeamMember] = useState(false); 
+    const [showAddProject, setShowAddProject] = useState(false);
 
     useEffect(() => {
         const role = localStorage.getItem("userRole");
@@ -15,7 +20,10 @@ const Dashboard = () => {
                 return (
                     <Grid container spacing={3}>
                         <Grid item xs={12} sm={6} md={4}>
-                            <Card>
+                            <Card 
+                                sx={{ cursor: "pointer" }} 
+                                onClick={() => setShowAddTeamMember(!showAddTeamMember)}
+                            >
                                 <CardContent>
                                     <Typography variant="h6">Manage Users</Typography>
                                     <Typography variant="body2">Add, edit, and remove users.</Typography>
@@ -23,7 +31,10 @@ const Dashboard = () => {
                             </Card>
                         </Grid>
                         <Grid item xs={12} sm={6} md={4}>
-                            <Card>
+                            <Card
+                                sx={{ cursor: "pointer" }} 
+                                onClick={() => setShowAddProject(!showAddProject)}
+                             >
                                 <CardContent>
                                     <Typography variant="h6">View Projects</Typography>
                                     <Typography variant="body2">Monitor all ongoing projects.</Typography>
@@ -38,6 +49,18 @@ const Dashboard = () => {
                                 </CardContent>
                             </Card>
                         </Grid>
+
+                        {showAddTeamMember && (
+                            <Grid item xs={12} sx={{ mt: 2 }}>
+                                <AddTeamMember />
+                            </Grid>
+                        )}
+
+{showAddProject && (
+                            <Grid item xs={12} sx={{ mt: 2 }}>
+                                <Project />  
+                            </Grid>
+                        )}
                     </Grid>
                 );
 
@@ -91,15 +114,19 @@ const Dashboard = () => {
     };
 
     return (
-        <Container sx={{ mt: 4 }}>
-            <Typography variant="h4" gutterBottom>
-                Welcome to the Dashboard
-            </Typography>
-            <Typography variant="subtitle1" gutterBottom>
-                Your Role: <strong>{userRole || "Not Found"}</strong>
-            </Typography>
-            {getRoleBasedContent()}
-        </Container>
+        <Box sx={{ display: "flex" }}>
+            {userRole === "ADMIN" && <Sidebar />}
+
+            <Container sx={{ mt: 4, flexGrow: 1 }}>
+                <Typography variant="h4" gutterBottom>
+                    Welcome to the Dashboard
+                </Typography>
+                <Typography variant="subtitle1" gutterBottom>
+                    Your Role: <strong>{userRole || "Not Found"}</strong>
+                </Typography>
+                {getRoleBasedContent()}
+            </Container>
+        </Box>
     );
 };
 

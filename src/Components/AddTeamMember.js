@@ -1,30 +1,8 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  TextField,
-  Button,
-  TableCell,
-  TableBody,
-  TableRow,
-  Paper,
-  Table,
-  TableHead,
-  TableContainer,
-  Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  Container,
-  Typography
+import { Dialog, DialogActions, DialogContent, DialogTitle,TextField, Button,   TableCell, TableBody, TableRow, Paper,Table,TableHead,TableContainer, Grid, FormControl,InputLabel, Select, MenuItem, FormControlLabel,RadioGroup, Radio,
+  Container,Typography
 } from "@mui/material";
-import { addTeamMember, getAllMembers ,  getAllBranches, GetAllDepartments,getAllRoles , getAllProjects , GetAllTeams , deleteTeamMember} from "../Services/APIServices";
+import { addTeamMember, getAllMembers ,  getAllBranches, GetAllDepartments,getAllRoles , getAllProjects , GetAllTeams , deleteTeamMember , MakeLeader} from "../Services/APIServices";
 import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
@@ -50,14 +28,17 @@ const AddTeamMember = () => {
     department: "",
     branchName: "",
     address: "",
-    joiningDate: "",
+    joinDate: "",
     teamId: "",  
     isLeader: "false",
     projectName:"",
+    userRole: "TEAM_MEMBER",
   });
 
+  const userRoles = ["TEAM_MEMBER", "TEAM_LEADER"];
+
   useEffect(() => {
-    fetchMembers();
+    fetchMembers(); 
     fetchBranches();
     fetchDepartments();
     fetchRoles();
@@ -133,22 +114,34 @@ const AddTeamMember = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpen(false);
+    console.log("Submitting Data:", newMember);
     try {
-      const response = await addTeamMember(newMember);
-      console.log("Member added successfully",response.data.jwtToken)
-      fetchMembers();
-      Swal.fire("Success", "Member added successfully!", "success");
-      if (response.data && response.data.token) {
-        localStorage.setItem("token", response.data.jwtToken);
-        console.log("Token stored:", localStorage.getItem("token"));
-    } else {
-        console.error("Token not found in response");
-    }
+        const response = await addTeamMember(newMember);
+        console.log("API Response:", response.newMember);
+        fetchMembers();
+        Swal.fire("Success", "Member added successfully!", "success");
+        if (response.data && response.data.token) {
+          localStorage.setItem("token", response.data.jwtToken);
+          console.log("Token stored:", localStorage.setItem("token"));
+      } else {
+          console.error("Token not found in response");
+      }
+
+        if (newMember.isLeader === "true") {
+            if (response.data.id) {
+                await MakeLeader(response.data.id);
+                console.log("Leader assigned successfully");
+            } else {
+                console.error("ID not found in response"); // Debugging Line
+            }
+        }
     } catch (error) {
-      console.error("Error adding member:", error);
-      Swal.fire("Error", "Failed to add member.", "error");
+        console.error("Error adding member:", error);
+        Swal.fire("Error", "Failed to add member.", "error");
     }
-  };
+};
+
+
 
   const handleDelete = async (id) => {
       const result = await Swal.fire({
@@ -163,7 +156,7 @@ const AddTeamMember = () => {
       if (result.isConfirmed) {
         try {
           await deleteTeamMember(id);
-          setProjects(newMember.filter((pro) => pro.id !== id));
+          setMembers(members.filter((mem) => mem.id !== id));
           Swal.fire("Deleted!", "Member has been deleted.", "success");
         } catch (error) {
           console.error("Error deleting Member:", error);
@@ -181,7 +174,7 @@ const AddTeamMember = () => {
   return (
     <Container component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
     <Button variant="outlined" color="primary" sx={{mr:"55rem",mt:5}} onClick={()=>navigate(-1)}>Back</Button>
-    <Button variant="contained" color="primary" onClick={() => setShowForm(!showForm)}>
+    <Button variant="contained" sx={{mt:5}} color="primary" onClick={() => setShowForm(!showForm)}>
       {showForm ? "Close Form" : "Add Member"}
     </Button>
     {showForm ? (
@@ -192,48 +185,49 @@ const AddTeamMember = () => {
           <form onSubmit={handleSubmit}>
             <Grid container spacing={1}>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Name" name="name" value={newMember.name} onChange={handleChange} required />
+                <TextField fullWidth label="Name" name="name" value={newMember?.name || ""} onChange={handleChange} required />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Email" name="email" value={newMember.email} onChange={handleChange} required />
+                <TextField fullWidth label="Email" name="email" value={newMember?.email || ""} onChange={handleChange} required />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth margin="dense" label="Password" name="password" value={newMember.password} onChange={handleChange} />
+                <TextField fullWidth margin="dense" label="Password" name="password" type="password" value={newMember?.password ||
+                  ""} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth margin="dense" label="Confirm Password" name="confirmPassword" value={newMember.confirmPassword} onChange={handleChange} />
+                <TextField fullWidth margin="dense" label="Confirm Password" name="confirmPassword" type="password" value={newMember?.confirmPassword || ""} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth margin="dense" label="Join Date" name="joinDate" type="date" value={newMember.joinDate} onChange={handleChange} />
+                <TextField fullWidth margin="dense" label="Join Date" name="joinDate" type="date" value={newMember?.joinDate || ""} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
                   <FormControl fullWidth margin="dense">
                     <InputLabel>Department</InputLabel>
                     <Select
                       name="department"
-                      value={selectedMember?.department || ""}
-                      onChange={(e) => setSelectedMember({ ...selectedMember, department: e.target.value })}
-                    >
-                      {departments.map((department) => (
-                        <MenuItem key={department.id} value={department.department}>
-                          {department.department}
+                      value={newMember?.department || ""}
+                      onChange={handleChange}>
+                    
+                      {departments.map((dept) => (
+                        <MenuItem key={dept.id} value={dept.department}>
+                          {dept.department}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <TextField fullWidth margin="dense" label="Phone" name="phone" value={newMember.phone} onChange={handleChange} />
+                  <TextField fullWidth margin="dense" label="Phone" name="phone" value={newMember?.phone || ""} onChange={handleChange} />
                 </Grid>
                 <Grid item xs={12} md={4}>
-                  <TextField fullWidth margin="dense" label="Address" name="address" value={newMember.address} onChange={handleChange} />
+                  <TextField fullWidth margin="dense" label="Address" name="address" value={newMember?.address || ""} onChange={handleChange} />
                 </Grid>
               <Grid item xs={12} md={4}>
                <FormControl fullWidth margin="dense">
                 <InputLabel>Role Name</InputLabel>
-                  <Select name="role" value={newMember.role} onChange={handleChange}>
+                  <Select name="roleName" value={newMember?.roleName || ""} onChange={handleChange}>
                     {roles.map((rol) => (
-                      <MenuItem key={rol.id} value={rol.projectName}>{rol.role}</MenuItem>
+                      <MenuItem key={rol.id} value={rol.roleName}>{rol.roleName}</MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -241,7 +235,7 @@ const AddTeamMember = () => {
             <Grid item xs={12} md={4}>
                <FormControl fullWidth margin="dense">
                 <InputLabel>Project Name</InputLabel>
-                  <Select name="projectName" value={newMember.projectName} onChange={handleChange}>
+                  <Select name="projectName" value={newMember?.projectName || ""} onChange={handleChange}>
                     {projects.map((pro) => (
                       <MenuItem key={pro.id} value={pro.projectName}>{pro.projectName}</MenuItem>
                     ))}
@@ -251,7 +245,7 @@ const AddTeamMember = () => {
             <Grid item xs={12} md={4}>
                 <FormControl fullWidth margin="dense">
                   <InputLabel>Branch</InputLabel>
-                  <Select name="branchName" value={newMember.branchName} onChange={handleChange}>
+                  <Select name="branchName" value={newMember?.branchName || ""} onChange={handleChange}>
                     {branches.map((branch) => (
                       <MenuItem key={branch.id} value={branch.branchName}>{branch.branchName}</MenuItem>
                     ))}
@@ -261,10 +255,10 @@ const AddTeamMember = () => {
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth margin="dense">
                   <InputLabel>Team ID</InputLabel>
-                  <Select name="teamId" value={newMember.teamId} onChange={handleChange}>
+                  <Select name="teamId" value={newMember?.teamId || ""} onChange={handleChange}>
                     {teams.map((team) => (
                       <MenuItem key={team.id} value={team.id}>
-                        {team.teamName}
+                        {team.id}
                       </MenuItem>
                     ))}
                   </Select>
@@ -273,12 +267,30 @@ const AddTeamMember = () => {
               <Grid item xs={12} md={4}>
                 <FormControl component="fieldset" margin="dense">
                   <p><strong>Is Leader ?</strong></p>
-                  <RadioGroup row name="isLeader" value={newMember.isLeader} onChange={handleChange}>
+                  <RadioGroup row name="isLeader" value={newMember?.isLeader || ""} onChange={handleChange}>
                     <FormControlLabel value="true" control={<Radio />} label="Yes" />
                     <FormControlLabel value="false" control={<Radio />} label="No" />
                   </RadioGroup>
                 </FormControl>
               </Grid>
+              <Grid item xs={12} md={4}>
+              <TextField
+                  select
+                  label="User Role"
+                  name="userRole"
+                  value={newMember.userRole}
+                  onChange={handleChange}
+                  fullWidth
+                  margin="normal"
+                >
+                  {userRoles.map((role) => (
+                    <MenuItem key={role} value={role}>
+                      {role}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+
               <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
                   Add Member
@@ -302,6 +314,7 @@ const AddTeamMember = () => {
                     <TableCell><b>Department</b></TableCell>
                     <TableCell><b>Project Name</b></TableCell>
                     <TableCell><b>Branch</b></TableCell>
+                    <TableCell><b>User Role</b></TableCell>
                     <TableCell><b>Action</b></TableCell>
                   </TableRow>
                 </TableHead>
@@ -313,9 +326,10 @@ const AddTeamMember = () => {
                       <TableCell>{member.department}</TableCell>
                       <TableCell>{member.projectName}</TableCell>
                       <TableCell>{member.branchName}</TableCell>
+                      <TableCell>{member.userRole}</TableCell>
                       <TableCell>
                         <Button variant="outlined" onClick={() => handleViewDetails(member)}>View</Button>
-                         <Button variant="contained" onClick={() => handleDelete(newMember?.id)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
+                        <Button variant="contained" onClick={() => handleDelete(member.id)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -337,10 +351,11 @@ const AddTeamMember = () => {
               <Typography><strong>Department:</strong> {selectedMember.department}</Typography>
               <Typography><strong>Phone:</strong> {selectedMember.phone}</Typography>
               <Typography><strong>Address:</strong> {selectedMember.address}</Typography>
-              <Typography><strong>Role:</strong> {selectedMember.role}</Typography>
+              <Typography><strong>Role:</strong> {selectedMember.roleName}</Typography>
               <Typography><strong>Project Name:</strong> {selectedMember.projectName}</Typography>
               <Typography><strong>Branch:</strong> {selectedMember.branchName}</Typography>
               <Typography><strong>Is Leader:</strong> {selectedMember.isLeader}</Typography>
+              <Typography><strong>User Role:</strong> {selectedMember.userRole}</Typography>
               </>
           )}
         </DialogContent>

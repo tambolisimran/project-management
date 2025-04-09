@@ -33,7 +33,7 @@ const menuItems = [
   { text: "Project", icon: <ProductionQuantityLimitsRounded />, path: "/project" },
   { text: "Team Member", icon: <Group />, path: "/team-member" },
 ];
-
+  
 const Sidebar = () => {
   const [open, setOpen] = useState(true);
 

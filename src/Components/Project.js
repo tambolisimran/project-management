@@ -54,7 +54,7 @@ const Project = () => {
     endDate: "",
     estimatedDate: "",
     statusDescription: "",
-    branch: "",
+    branchName: "",
     department: "",
     teamName:"",
   });
@@ -209,8 +209,8 @@ const Project = () => {
                <FormControl fullWidth margin="dense">
                     <InputLabel>Branch</InputLabel>
                     <Select
-                      name="branch"
-                      value={selectedProject?.branch || ""}
+                      name="branchName"
+                      value={selectedProject?.branchName || ""}
                       onChange={(e) => setSelectedProject({ ...selectedProject, branch: e.target.value })}
                     >
                       {branches.map((branch) => (
@@ -242,7 +242,7 @@ const Project = () => {
                     <InputLabel>Team</InputLabel>
                     <Select
                       name="teamName"
-                      value={selectedProject?.team || ""}
+                      value={selectedProject?.teamName || ""}
                       onChange={(e) => setSelectedProject({ ...selectedProject, branch: e.target.value })}
                     >
                       {teams.map((team) => (
@@ -302,7 +302,7 @@ const Project = () => {
         <DialogTitle>Project Details</DialogTitle>
         <DialogContent>
           {selectedProject && 
-          <Typography><strong>Project Name:</strong>Project Name:{selectedProject.projectName}</Typography>}
+          <Typography><strong>Project Name:</strong>{selectedProject.projectName}</Typography>}
           <Typography><strong>Project Category:</strong>{selectedProject?.projectCategory}</Typography>
           <Typography><strong>Status Bar:</strong>{selectedProject?.statusBar}</Typography>
           <Typography><strong>Status:</strong>{selectedProject?.status}</Typography>
