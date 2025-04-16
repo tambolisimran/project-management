@@ -23,8 +23,10 @@ import {
 } from "../Services/APIServices";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
 const Role = () => {
+//  const { token } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [roles, setRoles] = useState([]);
@@ -65,15 +67,7 @@ const Role = () => {
     setOpen(false);
     try {
         const response = await addRole(add);
-        console.log("Role added successfully", response.data.jwtToken);
-
-        if (response.data && response.data.token) {
-            localStorage.setItem("token", response.data.jwtToken);
-            console.log("Token stored:", localStorage.getItem("token"));
-        } else {
-            console.error("Token not found in response");
-        }
-
+        console.log("Role added successfully", response.data);
         setRoles([...roles, response.data]);
         setAdd({ roleName: "" });
     } catch (error) {

@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogActions, DialogContent, DialogTitle,TextField, Button,   TableCell, TableBody, TableRow, Paper,Table,TableHead,TableContainer, Grid, FormControl,InputLabel, Select, MenuItem, FormControlLabel,RadioGroup, Radio,
   Container,Typography
 } from "@mui/material";
-import { addTeamMember, getAllMembers ,  getAllBranches, GetAllDepartments,getAllRoles , getAllProjects , GetAllTeams , deleteTeamMember , MakeLeader} from "../Services/APIServices";
+import { addTeamMember, getAllMembers ,getMemberById,  getAllBranches, GetAllDepartments,getAllRoles , getAllProjects , GetAllTeams , deleteTeamMember , MakeLeader} from "../Services/APIServices";
 import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
 const AddTeamMember = () => {
-    const navigate = useNavigate();
+  // const { token } = useAuth();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [members, setMembers] = useState([]);
@@ -23,19 +25,18 @@ const AddTeamMember = () => {
   const [newMember, setNewMember] = useState({
     name: "",
     email: "",
+    password:"",
     roleName: "",
     phone: "",
     department: "",
     branchName: "",
     address: "",
     joinDate: "",
-    teamId: "",  
+    teamName: "",  
     isLeader: "false",
     projectName:"",
-    userRole: "TEAM_MEMBER",
+    userRole: "",
   });
-
-  const userRoles = ["TEAM_MEMBER", "TEAM_LEADER"];
 
   useEffect(() => {
     fetchMembers(); 
@@ -108,31 +109,32 @@ const AddTeamMember = () => {
   const handleDetailClose = () => setDetailOpen(false);
 
   const handleChange = (e) => {
-    setNewMember({ ...newMember, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let updatedMember = { ...newMember, [name]: value };
+  
+    if (name === "isLeader") {
+      updatedMember.userRole = value === "true" ? "TEAM_LEADER" : "TEAM_MEMBER";
+    }
+  
+    setNewMember(updatedMember);
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpen(false);
     console.log("Submitting Data:", newMember);
     try {
         const response = await addTeamMember(newMember);
-        console.log("API Response:", response.newMember);
+        console.log("API Response:", response.data);
+        console.log(response.data.jwtToken);   
         fetchMembers();
         Swal.fire("Success", "Member added successfully!", "success");
-        if (response.data && response.data.token) {
-          localStorage.setItem("token", response.data.jwtToken);
-          console.log("Token stored:", localStorage.setItem("token"));
-      } else {
-          console.error("Token not found in response");
-      }
-
-        if (newMember.isLeader === "true") {
+        if (newMember.isLeader === "true" && response.data.id) {
             if (response.data.id) {
                 await MakeLeader(response.data.id);
                 console.log("Leader assigned successfully");
             } else {
-                console.error("ID not found in response"); // Debugging Line
+                console.error("ID not found in response"); 
             }
         }
     } catch (error) {
@@ -140,8 +142,6 @@ const AddTeamMember = () => {
         Swal.fire("Error", "Failed to add member.", "error");
     }
 };
-
-
 
   const handleDelete = async (id) => {
       const result = await Swal.fire({
@@ -155,7 +155,8 @@ const AddTeamMember = () => {
   
       if (result.isConfirmed) {
         try {
-          await deleteTeamMember(id);
+          const response = await deleteTeamMember(id);
+          console.log(response.data);
           setMembers(members.filter((mem) => mem.id !== id));
           Swal.fire("Deleted!", "Member has been deleted.", "success");
         } catch (error) {
@@ -166,10 +167,16 @@ const AddTeamMember = () => {
     };
   
 
-  const handleViewDetails = (member) => {
-    setSelectedMember(member);
-    setDetailOpen(true);
-  };
+      const handleViewDetails = async (member) => {
+        try {
+          const response = await getMemberById(member.id); 
+          setSelectedMember(response.data);
+          setDetailOpen(true);
+        } catch (error) {
+          console.error("Failed to fetch full details:", error);
+        }
+      };
+      
 
   return (
     <Container component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -193,9 +200,6 @@ const AddTeamMember = () => {
               <Grid item xs={12} md={4}>
                 <TextField fullWidth margin="dense" label="Password" name="password" type="password" value={newMember?.password ||
                   ""} onChange={handleChange} />
-              </Grid>
-              <Grid item xs={12} md={4}>
-                <TextField fullWidth margin="dense" label="Confirm Password" name="confirmPassword" type="password" value={newMember?.confirmPassword || ""} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField fullWidth margin="dense" label="Join Date" name="joinDate" type="date" value={newMember?.joinDate || ""} onChange={handleChange} />
@@ -254,11 +258,11 @@ const AddTeamMember = () => {
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth margin="dense">
-                  <InputLabel>Team ID</InputLabel>
-                  <Select name="teamId" value={newMember?.teamId || ""} onChange={handleChange}>
+                  <InputLabel>Team Name</InputLabel>
+                  <Select name="team" value={newMember?.team?.id || ""} onChange={handleChange}>
                     {teams.map((team) => (
-                      <MenuItem key={team.id} value={team.id}>
-                        {team.id}
+                      <MenuItem key={team.id} value={team.team}>
+                        {team.team}
                       </MenuItem>
                     ))}
                   </Select>
@@ -273,7 +277,7 @@ const AddTeamMember = () => {
                   </RadioGroup>
                 </FormControl>
               </Grid>
-              <Grid item xs={12} md={4}>
+              {/* <Grid item xs={12} md={4}>
               <TextField
                   select
                   label="User Role"
@@ -289,7 +293,7 @@ const AddTeamMember = () => {
                     </MenuItem>
                   ))}
                 </TextField>
-              </Grid>
+              </Grid> */}
 
               <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
@@ -343,25 +347,25 @@ const AddTeamMember = () => {
         <DialogContent>
           {selectedMember  && (
             <>
-              <Typography><strong>Name:</strong> {selectedMember.name}</Typography>
-              <Typography><strong>Email:</strong> {selectedMember.email}</Typography>
-              <Typography><strong>Password:</strong> {selectedMember.password}</Typography>
-              <Typography><strong>Confirm Password:</strong> {selectedMember.confirmPassword}</Typography>
-              <Typography><strong>Join Date:</strong> {selectedMember.joinDate}</Typography>
-              <Typography><strong>Department:</strong> {selectedMember.department}</Typography>
-              <Typography><strong>Phone:</strong> {selectedMember.phone}</Typography>
-              <Typography><strong>Address:</strong> {selectedMember.address}</Typography>
-              <Typography><strong>Role:</strong> {selectedMember.roleName}</Typography>
-              <Typography><strong>Project Name:</strong> {selectedMember.projectName}</Typography>
-              <Typography><strong>Branch:</strong> {selectedMember.branchName}</Typography>
-              <Typography><strong>Is Leader:</strong> {selectedMember.isLeader}</Typography>
-              <Typography><strong>User Role:</strong> {selectedMember.userRole}</Typography>
+              <Typography><strong>Name:</strong> {selectedMember?.name}</Typography>
+              <Typography><strong>Email:</strong> {selectedMember?.email}</Typography>
+              <Typography><strong>Password:</strong> {selectedMember?.password}</Typography>
+              <Typography><strong>Join Date:</strong> {selectedMember?.joinDate}</Typography>
+              <Typography><strong>Team:</strong> {selectedMember?.teamName || "N/A"}</Typography>
+              <Typography><strong>Department:</strong> {selectedMember?.department}</Typography>
+              <Typography><strong>Phone:</strong> {selectedMember?.phone}</Typography>
+              <Typography><strong>Address:</strong> {selectedMember?.address}</Typography>
+              <Typography><strong>Role:</strong> {selectedMember?.roleName || "N/A"}</Typography>
+              <Typography><strong>Branch:</strong> {selectedMember?.branchName || "N/A"}</Typography>
+              <Typography><strong>Is Leader:</strong> {selectedMember?.isLeader === "true" ? "Leader" : "Member"}</Typography>
+              <Typography><strong>User Role:</strong> {selectedMember?.userRole || "N/A"}</Typography>
+
               </>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDetailClose} variant="contained">Close</Button>
-          <Button variant="contained" onClick={() => handleDelete(newMember?.id)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
+          <Button variant="contained" onClick={() => handleDelete(selectedMember?.id)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
         </DialogActions>
       </Dialog> 
     </Container>

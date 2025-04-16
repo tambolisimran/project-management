@@ -23,8 +23,10 @@ import {
 } from "../Services/APIServices";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
 const Department = () => {
+  // const { token } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [departments, setDepartments] = useState([]);
@@ -41,8 +43,8 @@ const Department = () => {
         const response = await GetAllDepartments();
         setDepartments(response.data || []);
       } catch (error) {
-        console.error("Error fetching teams:", error);
-        Swal.fire("Error", "Failed to load teams.", "error");
+        console.error("Error fetching departments:", error);
+        Swal.fire("Error", "Failed to load departments.", "error");
       }
     };
   
@@ -54,21 +56,13 @@ const Department = () => {
   const handleChange = (e) => {
     setAdd({ ...add, [e.target.name]: e.target.value });
   };
-
+ 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpen(false);
     try {
       const response = await addDepartment(add);
-      console.log("Department added successfully", response.data.jwtToken);
-      
-      if (response.data && response.data.jwtToken) {
-        localStorage.setItem("token", response.data.jwtToken);
-        console.log("Token stored:", localStorage.getItem("token"));
-    } else {
-        console.error("Token not found in response");
-    }
-
+      console.log("Department added successfully", response.data);
       setDepartments([...departments, response.data]);
       setAdd({ department: "" });
     } catch (error) {
@@ -111,7 +105,6 @@ const Department = () => {
         if (response.data) {
           setSelectedDepartment(response.data);
           setDetailOpen(true);
-          console.log(localStorage.getItem("token"));
         } else {
           Swal.fire("Error", "Department not found!", "error");
         }

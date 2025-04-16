@@ -32,6 +32,7 @@ const menuItems = [
   { text: "Dashboard", icon: <Group />, path: "/admin-dashboard" },
   { text: "Project", icon: <ProductionQuantityLimitsRounded />, path: "/project" },
   { text: "Team Member", icon: <Group />, path: "/team-member" },
+  { text: "Team Leader", icon: <Group />, path: "/team-leader" },
 ];
   
 const Sidebar = () => {

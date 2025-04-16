@@ -33,8 +33,10 @@ import {
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
 const Project = () => {
+  // const { token } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -107,8 +109,8 @@ const Project = () => {
     }
   };
 
-  const handleClickOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  // const handleClickOpen = () => setOpen(true);
+  // const handleClose = () => setOpen(false);
   const handleDetailClose = () => setDetailOpen(false);
 
   const handleChange = (e) => {
@@ -123,12 +125,6 @@ const Project = () => {
       console.log(response.data);
       fetchProjects();
       Swal.fire("Success", "Project added successfully!", "success");
-      if (response.data && response.data.token) {
-        localStorage.setItem("token", response.data.jwtToken);
-        console.log("Token stored:", localStorage.getItem("token"));
-    } else {
-        console.error("Token not found in response");
-    }
     } catch (error) {
       console.error("Error adding project:", error);
       Swal.fire("Error", "Failed to add project.", "error");
@@ -210,8 +206,8 @@ const Project = () => {
                     <InputLabel>Branch</InputLabel>
                     <Select
                       name="branchName"
-                      value={selectedProject?.branchName || ""}
-                      onChange={(e) => setSelectedProject({ ...selectedProject, branch: e.target.value })}
+                      value={add?.branchName || ""}
+                      onChange={handleChange}
                     >
                       {branches.map((branch) => (
                         <MenuItem key={branch.id} value={branch.branchName}>
@@ -226,8 +222,8 @@ const Project = () => {
                     <InputLabel>Department</InputLabel>
                     <Select
                       name="department"
-                      value={selectedProject?.department || ""}
-                      onChange={(e) => setSelectedProject({ ...selectedProject, department: e.target.value })}
+                      value={add?.department || ""}
+                      onChange={handleChange}
                     >
                       {departments.map((dept) => (
                         <MenuItem key={dept.id} value={dept.department}>
@@ -242,8 +238,8 @@ const Project = () => {
                     <InputLabel>Team</InputLabel>
                     <Select
                       name="teamName"
-                      value={selectedProject?.teamName || ""}
-                      onChange={(e) => setSelectedProject({ ...selectedProject, branch: e.target.value })}
+                      value={add?.teamName || ""}
+                      onChange={handleChange}
                     >
                       {teams.map((team) => (
                         <MenuItem key={team.id} value={team.teamName}>

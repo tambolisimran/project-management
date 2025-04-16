@@ -30,8 +30,10 @@ import {
 } from "../Services/APIServices";
 import Swal from "sweetalert2";
 import { useNavigate } from 'react-router-dom';
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
 const Team = () => {
+  // const { token } = useAuth();
   const navigate = useNavigate();
   const [updateOpen, setUpdateOpen] = useState(false); 
   const [open, setOpen] = useState(false);
@@ -50,7 +52,7 @@ const Team = () => {
     fetchTeams();
     fetchBranches();
     fetchDepartments();
-  }, [teams]);
+  }, []);
 
   const fetchTeams = async () => {
     try {
@@ -101,7 +103,6 @@ const Team = () => {
       const response = await addTeam(newTeam);
       setTeams([...teams, response.data]);
       console.log("team added sucessfully",response.data);
-      console.log(localStorage.getItem("token"));
       setNewTeam({ teamName: "", branchName: "", department: "" });
     } catch (error) {
       console.error("Error adding team:", error);

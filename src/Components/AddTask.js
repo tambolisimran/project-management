@@ -24,11 +24,14 @@ import {
 } from "@mui/material";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import {deleteTask,addTask,getAllTask} from "../Services/APIServices"
+import {deleteTask,addTask,getAllTask,updateTask} from "../Services/APIServices"
 import Swal from "sweetalert2";
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
-const AddTask = ({ selectedTask }) => {
-  const initialTaskState = {
+const AddTask = () => {
+  // const { token } = useAuth();
+  const [task, setTask] = useState({
+    taskId:null,
     description: "",
     projectName: "",
     days: 0,
@@ -43,21 +46,35 @@ const AddTask = ({ selectedTask }) => {
     durationInMinutes: 0,
     subject: "",
     priority: "LOW",
-    assignedTo: "",
-    assignedBy: "",
-  };
+    assignedByAdmin: "",
+    assignedByLeader: "",
+    assignedTo:"",
+  })
+   
   const [open, setOpen] = useState(false);
-  const [task, setTask] = useState(initialTaskState);
   const [tasks, setTasks] = useState([]);  
-
+  const [editingTask, setEditingTask] = useState(null);
   const [viewMode, setViewMode] = useState(false);
   const [selectedTaskDetails, setSelectedTaskDetails] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [adminList, setAdminList] = useState([]);
+  const [userList, setUserList] = useState([]);
+
   const navigate = useNavigate();
 
   useEffect(() => {
    fetchTasks();
-  }, [selectedTask]);
+   fetchAdmins();
+   fetchUsers();
+  });
+
+
+  const handleEdit = (task) => {
+    setEditingTask(task);
+    setTask({ ...task, taskId: task.taskId || "" });  
+    setShowForm(true);
+  };
+  
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -82,45 +99,100 @@ const AddTask = ({ selectedTask }) => {
   const calculateDurationInMinutes = (start, end) => {
     if (!start || !end) return 0;
   
-    const startTime = new Date(`2025-01-01T${start}:00`);
-    const endTime = new Date(`2025-01-01T${end}:00`);
+    try {
+      const startTime = new Date(`2025-01-01T${start}:00`);
+      const endTime = new Date(`2025-01-01T${end}:00`);
   
-    if (endTime < startTime) return 0; 
+      if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) return 0;
+      return Math.floor((endTime - startTime) / 60000);
+    } catch (error) {
+      console.error("Error calculating duration:", error);
+      return 0;
+    }
+  };
   
-    const diffInMs = endTime - startTime;
-    return Math.floor(diffInMs / 60000);
+
+  const formatTime = (dateTimeString) => {
+    if (!dateTimeString) return "";
+    return dateTimeString.split("T")[1]?.substring(0, 5); 
   };
   
   const fetchTasks = async () => {
     try {
-      const response = await getAllTask();  
-      setTasks(response.data || []);  
+      const response = await getAllTask();
+      const formattedTasks = response.data.map(task => ({
+        ...task,
+        startTime: formatTime(task.startTime),
+        endTime: formatTime(task.endTime),
+        assignedTo: task.assignedTo?.name || "N/A", 
+        assignedBy: task.assignedBy?.name || "N/A",
+      }));
+      setTasks(formattedTasks);
     } catch (error) {
       console.error("Error fetching tasks:", error);
       Swal.fire("Error", "Failed to load tasks.", "error");
     }
   };
-  
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setOpen(false);
-    try {
-        const response = await addTask(task);
-        console.log(response.data);
-        fetchTasks();
-        Swal.fire("Success", "Task added successfully!", "success");
 
-        if (response.data && response.data.token) {
-            localStorage.setItem("token", response.data.jwtToken);
-            console.log("Token stored:", localStorage.setItem("token"));
-        } else {
-            console.error("Token not found in response");
-        }
-        
-    } catch (error) {
-        console.error("Error adding task:", error);
-        Swal.fire("Error", "Failed to add task.", "error");
+  const fetchAdmins = async () => {
+    try {
+      const res = await axios.get("/api/admins"); 
+      setAdminList(res.data);
+    } catch (err) {
+      console.error("Failed to load admins", err);
     }
+  };
+  
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get("/api/users"); // Your endpoint to get users
+      setUserList(res.data);
+    } catch (err) {
+      console.error("Failed to load users", err);
+    }
+  };
+  
+
+  // const { token, setToken } = useContext(AuthContext); 
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setOpen(false);
+//     try {
+//         const response = await addTask(task);
+//         console.log(response.data);
+//         fetchTasks();
+//         Swal.fire("Success", "Task added successfully!", "success");
+//         if (response.token) {
+//           setToken(response.token); 
+//           localStorage.setItem("token", response.token); 
+//         }
+//     } catch (error) {
+//         console.error("Error adding task:", error);
+//         Swal.fire("Error", "Failed to add task.", "error");
+//     }
+// };
+
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setOpen(false);
+  try {
+    if (editingTask && editingTask.taskId) {
+      const response = await updateTask(editingTask.taskId, task);
+      console.log(response.data);
+      Swal.fire("Success", "Task updated successfully!", "success");
+    } else {
+      const response = await addTask(task);
+      console.log(response.data.jwtToken);
+      Swal.fire("Success", "Task added successfully!", "success");
+    }
+    fetchTasks(); 
+    // setTask(); 
+    setEditingTask(null); 
+    setShowForm(false);
+  } catch (error) {
+    console.error("Error submitting task:", error);
+    Swal.fire("Error", "Failed to save task.", "error");
+  }
 };
 
 
@@ -138,18 +210,23 @@ const AddTask = ({ selectedTask }) => {
           try {
             await deleteTask(taskId);
             setSelectedTaskDetails(task.filter((tsk) => tsk.taskId !== taskId));
-            Swal.fire("Deleted!", "Member has been deleted.", "success");
+            Swal.fire("Deleted!", "task has been deleted.", "success");
           } catch (error) {
-            console.error("Error deleting Member:", error);
-            Swal.fire("Error", "Failed to delete Member.", "error");
+            console.error("Error deleting task:", error);
+            Swal.fire("Error", "Failed to delete task.", "error");
           }
         }
       };
 
-  const handleView = (task) => {
-    setSelectedTaskDetails(task);
-    setViewMode(true);
-  };
+      const handleView = (task) => {
+        setSelectedTaskDetails({
+          ...task,
+          assignedTo: task.assignedTo?.name || "N/A",
+          assignedBy: task.assignedBy?.name || "N/A"
+        });
+        setViewMode(true);
+      };
+      
 
   return (
     <Container component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
@@ -178,25 +255,25 @@ const AddTask = ({ selectedTask }) => {
                 <TextField fullWidth label="Hours" name="hour" type="number" value={task.hour} onChange={handleChange}  InputProps={{ readOnly: true }} required />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Status" name="status" value={task.status} onChange={handleChange} required />
+                <TextField fullWidth label="Status" name="status" value={task.status} onChange={handleChange}  />
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField fullWidth margin="dense" label="Status Bar (%)" name="statusBar" type="number" inputProps={{ min: 0, max: 100 }} value={task.statusBar} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth type="date" label="Start Date" name="startDate" value={task.startDate} onChange={handleChange} required />
+                <TextField fullWidth type="date" label="Start Date" name="startDate" value={task.startDate} onChange={handleChange}  />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth type="date" label="End Date" name="endDate" value={task.endDate} onChange={handleChange} required />
+                <TextField fullWidth type="date" label="End Date" name="endDate" value={task.endDate} onChange={handleChange}  />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth type="time" label="Start Time" name="startTime" value={task.startTime} onChange={handleChange} required />
+                <TextField fullWidth type="time" label="Start Time" name="startTime" value={task.startTime} onChange={handleChange}  />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth type="time" label="End Time" name="endTime" value={task.endTime} onChange={handleChange} required />
+                <TextField fullWidth type="time" label="End Time" name="endTime" value={task.endTime} onChange={handleChange}  />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Image Url" name="imageUrl" value={task.imageUrl} onChange={handleChange} required />
+                <TextField fullWidth label="Image Url" name="imageUrl" value={task.imageUrl} onChange={handleChange}  />
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField fullWidth label="Duration In Minutes" name="durationInMinutes" value={task.durationInMinutes} onChange={handleChange}  InputProps={{ readOnly: true }} required />
@@ -221,10 +298,13 @@ const AddTask = ({ selectedTask }) => {
               </Grid>
 
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Assigned To" name="assignedTo" value={task.assignedTo} onChange={handleChange} required />
+                <TextField fullWidth label="Assigned By Admin" name="assignedByAdmin" value={task.assignedByAdmin} onChange={handleChange} required />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Assigned By" name="assignedBy" value={task.assignedBy} onChange={handleChange} required />
+                <TextField fullWidth label="Assigned By Leader" name="assignedByLeader" value={task.assignedByLeader} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <TextField fullWidth label="Assigned To" name="assignedTo" value={task.assignedTo} onChange={handleChange} required />
               </Grid>
               <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
@@ -253,8 +333,8 @@ const AddTask = ({ selectedTask }) => {
               </TableHead>
               <TableBody>
                 {tasks.map((task) => (
-                  <TableRow key={task.id}>
-                    <TableCell>{task.id}</TableCell>
+                  <TableRow key={task.taskId}>
+                    <TableCell>{task.taskId}</TableCell>
                     <TableCell>{task.description}</TableCell>
                     <TableCell>{task.projectName}</TableCell>
                     <TableCell>{task.days}</TableCell>
@@ -263,7 +343,8 @@ const AddTask = ({ selectedTask }) => {
                       <Button variant="outlined" color="info" onClick={() => handleView(task)}>
                         View
                       </Button>
-                      <Button variant="contained" onClick={() => handleDelete(task?.id)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
+                      <Button variant="contained" onClick={() => handleDelete(task?.taskId)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
+                      <Button variant="contained" color="warning" sx={{ ml: 2 ,color: "white" }} onClick={() => handleEdit(task.taskId)}>Edit</Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -292,8 +373,32 @@ const AddTask = ({ selectedTask }) => {
               <Typography><strong>durationInMinutes:</strong> {selectedTaskDetails.durationInMinutes}</Typography>
               <Typography><strong>subject:</strong> {selectedTaskDetails.subject}</Typography>
               <Typography><strong>priority:</strong> {selectedTaskDetails.priority}</Typography>
-              <Typography><strong>assignedTo:</strong> {selectedTaskDetails.assignedTo}</Typography>
-              <Typography><strong>assignedBy:</strong> {selectedTaskDetails.assignedBy}</Typography>
+              <Grid item xs={12} md={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Assign By Admin</InputLabel>
+                  <Select name="assignedByAdminId" value={task.assignedByAdminId} onChange={handleChange}>
+                    {adminList.map((admin) => (
+                      <MenuItem key={admin.id} value={admin.id}>
+                        {admin.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
+                <InputLabel>Assign To User</InputLabel>
+                <Select name="assignedToId" value={task.assignedToId} onChange={handleChange}>
+                  {userList.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
             </>
           )}
         </DialogContent>

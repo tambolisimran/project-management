@@ -11,6 +11,8 @@ import AddTeamMember from '../Components/AddTeamMember'
 import Project from '../Components/Project';
 import AddTask from '../Components/AddTask'
 import Dashboard from '../Components/Dashboard'
+import ForgetPassword from '../Components/ForgetPassword'
+import AddTeamLeader from '../Components/AddTeamLeader'
 
 const NavRouting = () => {
   return (
@@ -18,6 +20,7 @@ const NavRouting = () => {
        <Routes>
         <Route path='/' element={<AdminRegister/>}/>
         <Route path='/login' element={<AdminLogin/>}/>
+        <Route path='/forgetpassword' element={<ForgetPassword/>}/>
         <Route path='/admin-dashboard' element={<Dashboard/>}/>
         <Route path='/sidebar' element={<Sidebar/>}/>
         <Route path='/department' element={<Department/>}/>
@@ -25,6 +28,7 @@ const NavRouting = () => {
         <Route path='/branch' element={<Branch/>}/>
         <Route path='/team' element={<Team/>}/>
         <Route path='/team-member' element={<AddTeamMember/>}/>
+        <Route path='/team-leader' element={<AddTeamLeader/>}/>
         <Route path="/update-member/:id" element={<AddTeamMember />} />
         <Route path='/project' element={<Project/>}/>
         <Route path="/create" element={<AddTask />} />

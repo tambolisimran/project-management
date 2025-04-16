@@ -23,8 +23,10 @@ import {
 } from "../Services/APIServices";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
+// import { useAuth } from "./Layouts/ContextApi/AuthContext";
 
 const Branch = () => {
+  // const { token } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [branch, setBranch] = useState([]);
@@ -65,10 +67,9 @@ const Branch = () => {
     setOpen(false);
     try {
       const response = await addBranch(add);
-      console.log("Branch added successfully", response.data.jwtToken);
-      console.log(localStorage.getItem("token"));
-      setBranch([...branch, response.data]);
-      setAdd({ branch: "" });
+      console.log("Branch added successfully", response.data);
+      setBranch([...branch, response.data]); 
+      setAdd({ branchName: "" });
     } catch (error) {
       console.error("Error adding branch:", error);
     }
