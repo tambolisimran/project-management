@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink} from "react-router-dom";
 import {
   Drawer,
   List,
@@ -8,48 +8,52 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
-  IconButton,
   Box,
   Typography,
 } from "@mui/material";
 import {
-  Dashboard,
   Menu as MenuIcon,
-  Logout,
-  Close,
-  VerifiedUser,
   Group,
-  SupervisedUserCircle,
   ProductionQuantityLimitsRounded,
 } from "@mui/icons-material";
 
-const menuItems = [
-  { text: "Department", icon: <Dashboard />, path: "/department" },
-  { text: "Role", icon: <SupervisedUserCircle />, path: "/roles" },
-  { text: "Branch", icon: <VerifiedUser />, path: "/branch" },
-  { text: "Teams", icon: <Group />, path: "/team" },
-  {text: "Add task", icon: <Group />, path: "/create" },
+const adminMenuItems = [
   { text: "Dashboard", icon: <Group />, path: "/admin-dashboard" },
   { text: "Project", icon: <ProductionQuantityLimitsRounded />, path: "/project" },
-  { text: "Team Member", icon: <Group />, path: "/team-member" },
-  { text: "Team Leader", icon: <Group />, path: "/team-leader" },
+  { text: "Task List", icon: <Group />, path: "/tasklist" },
+  { text: "Team Setting", icon: <Group />, path: "/teamsetting" },
+  { text: "Menu", icon: <MenuIcon />, path: "/menu" },
 ];
-  
+
 const Sidebar = () => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
+
+  const handleMouseEnter = () => {
+    setOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    setOpen(false); 
+  };
 
   return (
     <Box sx={{ display: "flex" }}>
       <Drawer
         variant="permanent"
         open={open}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         sx={{
           width: open ? 240 : 60,
           flexShrink: 0,
+          backgroundColor: "#3D90D7", 
           "& .MuiDrawer-paper": {
             width: open ? 240 : 60,
             transition: "width 0.3s",
             boxSizing: "border-box",
+            backgroundColor: "#3D90D7", 
+            color: "#fff", 
+            zIndex: 1200, // Lower z-index than the TopNavbar
           },
         }}
       >
@@ -59,18 +63,16 @@ const Sidebar = () => {
             alignItems: "center",
             justifyContent: "space-between",
             padding: "10px",
+            color: "#fff", 
           }}
         >
           {open && <Typography variant="h6">Admin Panel</Typography>}
-          <IconButton onClick={() => setOpen(!open)}>
-            {open ? <Close /> : <MenuIcon />}
-          </IconButton>
         </Box>
-        <Divider />
+        <Divider sx={{ backgroundColor: "#fff" }} />
 
         <List>
-          {menuItems.map((item, index) => (
-            <ListItem key={index} disablePadding sx={{ display: "block" }}>
+          {adminMenuItems.map((item, index) => (
+            <ListItem key={item.text} disablePadding sx={{ display: "block" }}>
               <NavLink
                 to={item.path}
                 style={{
@@ -84,36 +86,35 @@ const Sidebar = () => {
                     minHeight: 48,
                     justifyContent: open ? "initial" : "center",
                     px: 2.5,
+                    "&:hover": {
+                      backgroundColor: "#3478B2", 
+                    },
                   }}
                 >
-                  <ListItemIcon sx={{ minWidth: 0, justifyContent: "center" }}>
+                  <ListItemIcon
+                    sx={{
+                      minWidth: 0,
+                      justifyContent: "center",
+                      color: "#fff", 
+                      fontWeight: 500, 
+                    }}
+                  >
                     {item.icon}
                   </ListItemIcon>
-                  {open && <ListItemText primary={item.text} sx={{ ml: 2 }} />}
+                  <ListItemText
+                    primary={item.text}
+                    sx={{
+                      ml: 2,
+                      display: open ? "block" : "none", 
+                    }}
+                  />
                 </ListItemButton>
               </NavLink>
             </ListItem>
           ))}
         </List>
 
-        <Divider />
-
-        <List sx={{ marginTop: "auto" }}>
-          <ListItem disablePadding sx={{ display: "block" }}>
-            <ListItemButton
-              sx={{
-                minHeight: 48,
-                justifyContent: open ? "initial" : "center",
-                px: 2.5,
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: 0, justifyContent: "center" }}>
-                <Logout />
-              </ListItemIcon>
-              {open && <ListItemText primary="Logout" sx={{ ml: 2 }} />}
-            </ListItemButton>
-          </ListItem>
-        </List>
+        
       </Drawer>
     </Box>
   );

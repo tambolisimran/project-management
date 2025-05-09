@@ -13,7 +13,10 @@ import {
   Table,
   TableHead,
   TableContainer,
-  Box
+  Box,
+  Container,
+  Typography,
+  Grid
 } from "@mui/material";
 import {
   addBranch,
@@ -23,11 +26,13 @@ import {
 } from "../Services/APIServices";
 import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
-// import { useAuth } from "./Layouts/ContextApi/AuthContext";
+import { Delete } from "@mui/icons-material";
+import { motion } from "framer-motion";
 
-const Branch = () => {
-  // const { token } = useAuth();
+const Branch = () => {  
+
   const navigate = useNavigate();
+   const [showForm, setShowForm] = useState(false);
   const [open, setOpen] = useState(false);
   const [branch, setBranch] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -53,10 +58,6 @@ const Branch = () => {
         Swal.fire("Error", "Failed to load branch.", "error");
     }
 };
-
-  const handleClickOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  const handleDetailClose = () => setDetailOpen(false);
 
   const handleChange = (e) => {
     setAdd({ ...add, [e.target.name]: e.target.value });
@@ -119,151 +120,65 @@ const Branch = () => {
       }
     };
 
-    const handleBack = () =>{
-      navigate('/sidebar');
-    }
-
-
   return (
     <>
-      <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mt: 7,
-                mx: 32,
-              }}
-            >
-              <Button
-                variant="contained"
-                color="white"
-                onClick={handleBack}
-                sx={{
-                  color: "white",
-                  backgroundColor: "#3F51B5",
-                }}
-              >
-                Back
-              </Button>
-      
-              <Button
-                variant="contained"
-                sx={{
-                  backgroundColor: "#3F51B5",
-                  color: "white",
-                  fontSize: "1rem",
-                  fontWeight: "bold",
-                  py: 1,
-                }}
-                onClick={handleClickOpen}
-              >
-                Add Branch
-              </Button>
-            </Box>
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>Add Branch</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            margin="dense"
-            label="Branch Name"
-            name="branchName"
-            value={add.branchName}
-            onChange={handleChange}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={handleClose}
-            variant="outlined"
-            sx={{
-              color: "#A5158C",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              mt: 3,
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            onClick={handleSubmit}
-            variant="contained"
-            sx={{
-              backgroundColor: "#A5158C",
-              color: "white",
-              fontSize: "1rem",
-              fontWeight: "bold",
-              mt: 3,
-            }}
-          >
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <TableContainer
-        component={Paper}
-        sx={{
-          marginTop: 4,
-          maxWidth: "60%",
-          marginLeft: "auto",
-          marginRight: "auto",
-        }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#3F51B5" }}>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Branch Name
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {branch.map((branc, index) => (
-              <TableRow key={index}>
-                <TableCell>{branc.branchName}</TableCell>
-                <TableCell>
-                  <Button onClick={() => handleGetById(branc.id)} variant="outlined" sx={{ color: "#9067C6", mr: 1 }}>
-                    View
-                  </Button>
-                  <Button onClick={() => handleDelete(branc.id)} variant="contained" sx={{ color: "white" ,backgroundColor:"#fb6f92"}}>
-                    Delete
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-
-        </Table>
-      </TableContainer>
-
-      <Dialog open={detailOpen} onClose={handleDetailClose}>
-        <DialogTitle>Branch Details</DialogTitle>
-        <DialogContent>
-          {selectedBranch ? (
-            <>
-              <p>
-                <strong>ID:</strong> {selectedBranch.id}
-              </p>
-              <p>
-                <strong>Name:</strong> {selectedBranch.branchName}
-              </p>
-            </>
-          ) : (
-            <p>Loading...</p>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDetailClose} variant="outlined">
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
+     <Container component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
+            <Button variant="outlined" color="primary" sx={{mr:"55rem",mt:5}} onClick={()=>navigate(-1)}>Back</Button>
+            <Button variant="contained" sx={{mt:5}} color="primary" onClick={() => setShowForm(!showForm)}>
+              {showForm ? "Close Form" : "Add Branch"}
+            </Button>
+            {showForm ? (
+                    <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+                      <Typography variant="h5" gutterBottom>
+                        Create Branch
+                      </Typography>
+                      <form onSubmit={handleSubmit}>
+                        <Grid container spacing={1}>
+                          <Grid item xs={12} md={4}>
+                          <TextField
+                              fullWidth
+                              margin="dense"
+                              label="Branch Name"
+                              name="branchName"
+                              value={add.branchName}
+                              onChange={handleChange}
+                            />
+                          </Grid>
+                          <Grid item xs={12}>
+                            <Button type="submit" variant="contained" color="primary" fullWidth> Add Branch </Button>
+                          </Grid>
+                          </Grid>
+                      </form>
+                    </Paper>
+                    ):(
+              <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+                <Typography variant="h6" gutterBottom>Branch List</Typography>
+                <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{background:"lightgrey",fontSize:"bold"}}>
+                          <TableCell><b>ID</b></TableCell>
+                          <TableCell><b>Branch Name</b></TableCell>
+                          <TableCell><b>Actions</b></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {branch.map((branc, index) => (
+                          <TableRow key={index}>
+                            <TableCell>{branc.id}</TableCell>
+                            <TableCell>{branc.branchName}</TableCell>
+                            <TableCell>
+                              {/* <Visibility onClick={() => handleGetById(branc.id)} sx={{ color: "#3F51B5", cursor: "pointer", mr: 1 }} /> */}
+                              <Delete onClick={() => handleDelete(branc.id)} sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }} />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+              )}
+            </Container>
     </>
   );
 };

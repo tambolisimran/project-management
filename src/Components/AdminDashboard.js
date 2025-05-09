@@ -18,15 +18,16 @@ const tasks = [
 
 const AdminDashboard = () => {
   return (
-    <Box sx={{ padding: 3 }}>
-      <Typography variant="h4" sx={{ marginBottom: 2 }}>
-        Admin Dashboard - Task Management
-      </Typography>
-
+    <Box sx={{ display: "flex", marginLeft: "240px", padding: 3, width: "calc(100% - 240px)",paddingTop: 5, }}>
       <Grid container spacing={3}>
         <Grid item xs={12} md={6}>
           <Paper sx={{ padding: 3 }}>
-            <Typography variant="h6">Task Status Overview</Typography>
+            <Typography variant="h4" sx={{ marginBottom: 2 }}>
+              Admin Dashboard - Task Management
+            </Typography>
+            <Typography variant="h6" sx={{ marginBottom: 1 }}>
+              Task Status Overview
+            </Typography>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -49,9 +50,12 @@ const AdminDashboard = () => {
           </Paper>
         </Grid>
 
+        {/* Task List */}
         <Grid item xs={12} md={6}>
           <Paper sx={{ padding: 3 }}>
-            <Typography variant="h6">Task List</Typography>
+            <Typography variant="h6" sx={{ marginBottom: 2 }}>
+              Task List
+            </Typography>
             <List>
               {tasks.map((task) => (
                 <ListItem key={task.id}>

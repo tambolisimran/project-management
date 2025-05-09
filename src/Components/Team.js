@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
   TextField,
   Button,
   TableCell,
@@ -17,7 +13,10 @@ import {
   Select,
   InputLabel,
   FormControl,
-  Box
+  Box,
+  Container,
+  Grid,
+  Typography,
 } from "@mui/material";
 import {
   addTeam,
@@ -26,25 +25,25 @@ import {
   getTeamById,
   getAllBranches,
   GetAllDepartments,
-  updateTeam
+  updateTeam,
 } from "../Services/APIServices";
 import Swal from "sweetalert2";
-import { useNavigate } from 'react-router-dom';
-// import { useAuth } from "./Layouts/ContextApi/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { Visibility, Edit, Delete } from "@mui/icons-material";
+import { motion } from "framer-motion";
 
 const Team = () => {
-  // const { token } = useAuth();
   const navigate = useNavigate();
-  const [updateOpen, setUpdateOpen] = useState(false); 
-  const [open, setOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [teams, setTeams] = useState([]);
   const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [selectedTeam, setSelectedTeam] = useState(null);
-  const [detailOpen, setDetailOpen] = useState(false);
   const [newTeam, setNewTeam] = useState({
     teamName: "",
-    branch: "",
+    branchName: "",
     department: "",
   });
 
@@ -67,30 +66,21 @@ const Team = () => {
   const fetchBranches = async () => {
     try {
       const response = await getAllBranches();
-      
-      if (response && response.data) {  
-        setBranches(response.data);
-      } else {
-        setBranches([]);
-      }
+      setBranches(response?.data || []);
     } catch (error) {
       console.error("Error fetching branches:", error);
-      setBranches([]); 
+      setBranches([]);
     }
   };
-  
+
   const fetchDepartments = async () => {
     try {
       const response = await GetAllDepartments();
-      setDepartments(response.data || []);
+      setDepartments(response?.data || []);
     } catch (error) {
       console.error("Error fetching departments:", error);
     }
   };
-
-  const handleClickOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-  const handleDetailClose = () => setDetailOpen(false);
 
   const handleChange = (e) => {
     setNewTeam({ ...newTeam, [e.target.name]: e.target.value });
@@ -98,11 +88,9 @@ const Team = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setOpen(false);
     try {
       const response = await addTeam(newTeam);
       setTeams([...teams, response.data]);
-      console.log("team added sucessfully",response.data);
       setNewTeam({ teamName: "", branchName: "", department: "" });
     } catch (error) {
       console.error("Error adding team:", error);
@@ -132,277 +120,245 @@ const Team = () => {
     }
   };
 
-  const handleGetById = async (id) => {
+  // const handleView = async (id) => {
+  //   try {
+  //     const response = await getTeamById(id);
+  //     if (response.data) {
+  //       setSelectedTeam(response.data);
+  //       setViewOpen(true);
+  //     } else {
+  //       Swal.fire("Error", "Team not found!", "error");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching team details", error);
+  //     Swal.fire("Error", "Failed to fetch team details.", "error");
+  //   }
+  // };
+
+  const handleEdit = (team) => {
+    setSelectedTeam(team);
+    setUpdateOpen(true);
+  };
+
+  const handleUpdate = async () => {
     try {
-      console.log("Fetching team with ID:", id);
-      const response = await getTeamById(id);
-      console.log("Response received:", response.data);
-      if(response.data){
-        setSelectedTeam(response.data);
-        setDetailOpen(true);
-      }else{
-        Swal.fire("Error", "Department not found!", "error");
+      const response = await updateTeam(selectedTeam.id, selectedTeam);
+      if (response.status === 200 || response.status === 204) {
+        await fetchTeams();
+        setUpdateOpen(false);
+        setSelectedTeam(null);
+        Swal.fire("Success", "Team updated successfully.", "success");
+      } else {
+        throw new Error("Update failed");
       }
-      
     } catch (error) {
-      console.error("Error fetching team details", error);
-      Swal.fire("Error", "Failed to fetch team details.", "error");
+      console.error("Error updating team:", error);
+      Swal.fire("Error", "Failed to update team.", "error");
     }
-};
-
-
-const handleUpdate = async () => {
-  try {
-    await updateTeam(selectedTeam.id, selectedTeam);
-    setTeams((prevTeams) =>
-      prevTeams.map((team) =>
-        team.id === selectedTeam.id ? selectedTeam : team
-      )
-    );    
-   fetchTeams();
-    setUpdateOpen(false);
-    Swal.fire("Updated!", "Team details updated successfully.", "success");
-  } catch (error) {
-    console.error("Error updating team:", error);
-    Swal.fire("Error", "Failed to update team.", "error");
-  }
-};
-  const handleBack = () =>{
-    navigate("/sidebar")
-  }
+  };
 
   return (
-    <>
-     <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mt: 7,
-          mx: 32,
-        }}
+    <Container
+      component={motion.div}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Button
+        variant="outlined"
+        color="primary"
+        sx={{ mr: "55rem", mt: 5 }}
+        onClick={() => navigate(-1)}
       >
-        <Button
-          variant="contained"
-          color="white"
-          onClick={handleBack}
-          sx={{
-            color: "white",
-            backgroundColor: "#3F51B5",
-          }}
-        >
-          Back
-        </Button>
-        <Button
-        variant="contained"
-        sx={{
-          backgroundColor: "#3F51B5",
-          color: "white",
-          fontSize: "1rem",
-          fontWeight: "bold",
-          ml:15
-        }}
-        onClick={handleClickOpen}
-      >
-        Add Team
+        Back
       </Button>
-      </Box>
-      
-
-      <Dialog open={open} onClose={handleDetailClose}>
-        <DialogTitle>Add Team</DialogTitle>
-        <DialogContent>
-          <TextField
-            fullWidth
-            margin="dense"
-            label="Team Name"
-            name="teamName"
-            value={newTeam.teamName}
-            onChange={handleChange}
-          />
-
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Branch</InputLabel>
-            <Select
-              name="branchName"
-              value={newTeam.branchName}
-              onChange={handleChange}
-            >
-              {branches.map((branch) => (
-                <MenuItem key={branch.id} value={branch.branchName}>
-                  {branch.branchName}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControl fullWidth margin="dense">
-            <InputLabel>Department</InputLabel>
-            <Select
-              name="department"
-              value={newTeam.department}
-              onChange={handleChange}
-            >
-              {departments.map((department) => (
-                <MenuItem key={department.id} value={department.department}>
-                  {department.department}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} variant="outlined">
-            Cancel
-          </Button>
-          <Button type="submit" onClick={handleSubmit} variant="contained">
-            Add
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog open={updateOpen} onClose={() => setUpdateOpen(false)}>
-  <DialogTitle>Update Team</DialogTitle>
-  <DialogContent>
-    <TextField
-      fullWidth
-      margin="dense"
-      label="Team Name"
-      name="teamName"
-      value={selectedTeam?.teamName || ""}
-      onChange={(e) => setSelectedTeam({ ...selectedTeam, teamName: e.target.value })}
-    />
-    <FormControl fullWidth margin="dense">
-      <InputLabel>Branch</InputLabel>
-      <Select
-        name="branch"
-        value={selectedTeam?.branch || ""}
-        onChange={(e) => setSelectedTeam({ ...selectedTeam, branch: e.target.value })}
+      <Button
+        variant="contained"
+        sx={{ mt: 5 }}
+        color="primary"
+        onClick={() => setShowForm(!showForm)}
       >
-        {branches.map((branch) => (
-          <MenuItem key={branch.id} value={branch.branchName}>
-            {branch.branchName}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-    <FormControl fullWidth margin="dense">
-      <InputLabel>Department</InputLabel>
-      <Select
-        name="department"
-        value={selectedTeam?.department || ""}
-        onChange={(e) => setSelectedTeam({ ...selectedTeam, department: e.target.value })}
-      >
-        {departments.map((department) => (
-          <MenuItem key={department.id} value={department.department}>
-            {department.department}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-  </DialogContent>
-  <DialogActions>
-    <Button onClick={() => setUpdateOpen(false)} variant="outlined">
-      Cancel
-    </Button>
-    <Button onClick={handleUpdate} variant="contained">
-      Update
-    </Button>
-  </DialogActions>
-</Dialog>
+        {showForm ? "Close Form" : "Add Team"}
+      </Button>
 
-
-     <TableContainer
-        component={Paper}
-        sx={{
-        marginTop: 4,
-        maxWidth: "60%",
-        marginLeft: "auto",
-        marginRight: "auto",
-        }}
-        >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#3F51B5" }}>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Team Name
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Branch
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Department
-              </TableCell>
-              <TableCell sx={{ color: "white", fontWeight: "bold" }}>
-                Actions
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {teams.map((team, index) => (
-              <TableRow key={index}>
-                <TableCell>{team.teamName}</TableCell>
-                <TableCell>{team.branch}</TableCell>
-                <TableCell>{team.department}</TableCell>
-                <TableCell>
-                  <Button
-                    onClick={() => handleGetById(team.id)}
-                    variant="outlined"
-                    sx={{ color: "#3F51B5", mr: 1 }}>
-                    View
-                  </Button>
-                  <Button
-                    onClick={() => handleDelete(team.id)}
-                    variant="contained"
-                    sx={{ backgroundColor: "#D32F2F", color: "white" }}
+      {showForm && (
+        <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Create Team
+          </Typography>
+          <form onSubmit={handleSubmit}>
+            <Grid container spacing={1}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  label="Team Name"
+                  name="teamName"
+                  value={newTeam.teamName}
+                  onChange={handleChange}
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Branch</InputLabel>
+                  <Select
+                    name="branchName"
+                    value={newTeam.branchName}
+                    onChange={handleChange}
                   >
-                    Delete
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      setSelectedTeam(team);
-                      setUpdateOpen(true);
-                    }}
-                    variant="contained"
-                    sx={{ backgroundColor: "green", color: "white", ml: 1 }}
+                    {branches.map((branch) => (
+                      <MenuItem key={branch.id} value={branch.branchName}>
+                        {branch.branchName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Department</InputLabel>
+                  <Select
+                    name="department"
+                    value={newTeam.department}
+                    onChange={handleChange}
                   >
-                    Update
-                  </Button>
-
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      <Dialog open={detailOpen} onClose={handleDetailClose}>
-              <DialogTitle>Team Details</DialogTitle>
-              <DialogContent>
-                {selectedTeam ? (
-                  <>
-                    <p>
-                      <strong>ID:</strong> {selectedTeam.id}
-                    </p>
-                    <p>
-                      <strong>Name:</strong> {selectedTeam.teamName}
-                    </p>
-                    <p>
-                      <strong>Branch:</strong> {selectedTeam.branch}
-                    </p>
-                    <p>
-                      <strong>Department:</strong> {selectedTeam.department}
-                    </p>
-                  </>
-                ) : (
-                  <p>Loading...</p>
-                )}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleDetailClose} variant="outlined">
-                  Close
+                    {departments.map((department) => (
+                      <MenuItem key={department.id} value={department.department}>
+                        {department.department}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <Button type="submit" variant="contained" color="primary" fullWidth>
+                  Add Team
                 </Button>
-              </DialogActions>
-            </Dialog>
-    </>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      )}
+
+      {updateOpen && selectedTeam && (
+        <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+          <Typography variant="h5" gutterBottom>
+            Update Team
+          </Typography>
+          <form onSubmit={(e) => { e.preventDefault(); handleUpdate(); }}>
+            <Grid container spacing={1}>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  fullWidth
+                  margin="dense"
+                  label="Team Name"
+                  name="teamName"
+                  value={selectedTeam.teamName}
+                  onChange={(e) =>
+                    setSelectedTeam({ ...selectedTeam, teamName: e.target.value })
+                  }
+                />
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Branch</InputLabel>
+                  <Select
+                    name="branchName"
+                    value={selectedTeam.branchName}
+                    onChange={(e) =>
+                      setSelectedTeam({ ...selectedTeam, branchName: e.target.value })
+                    }
+                  >
+                    {branches.map((branch) => (
+                      <MenuItem key={branch.id} value={branch.branchName}>
+                        {branch.branchName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Department</InputLabel>
+                  <Select
+                    name="department"
+                    value={selectedTeam.department}
+                    onChange={(e) =>
+                      setSelectedTeam({ ...selectedTeam, department: e.target.value })
+                    }
+                  >
+                    {departments.map((department) => (
+                      <MenuItem key={department.id} value={department.department}>
+                        {department.department}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12}>
+                <Button type="submit" variant="contained" color="primary" fullWidth>
+                  Update Team
+                </Button>
+              </Grid>
+              <Grid item xs={12}>
+                <Button
+                  onClick={() => { setUpdateOpen(false); setSelectedTeam(null); }}
+                  color="secondary"
+                  fullWidth
+                >
+                  Cancel
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </Paper>
+      )}
+
+      {!showForm && (
+        <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            Team List
+          </Typography>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ background: "lightgrey" }}>
+                  <TableCell><b>ID</b></TableCell>
+                  <TableCell><b>Team Name</b></TableCell>
+                  <TableCell><b>Branch</b></TableCell>
+                  <TableCell><b>Department</b></TableCell>
+                  <TableCell><b>Actions</b></TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {teams.map((team, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{team.id}</TableCell>
+                    <TableCell>{team.teamName}</TableCell>
+                    <TableCell>{team.branchName}</TableCell>
+                    <TableCell>{team.department}</TableCell>
+                    <TableCell>
+                      {/* <Visibility
+                        onClick={() => handleView(team.id)}
+                        sx={{ color: "#3F51B5", cursor: "pointer", mr: 1 }}
+                      /> */}
+                      <Delete
+                        onClick={() => handleDelete(team.id)}
+                        sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }}
+                      />
+                      <Edit
+                        onClick={() => handleEdit(team)}
+                        sx={{ color: "green", cursor: "pointer" }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
+    </Container>
   );
 };
 

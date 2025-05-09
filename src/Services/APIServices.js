@@ -24,15 +24,15 @@ import  axios  from "axios"
 
 
 //   ****************** common login for all ***********************
-export const registerUser = async ({ name, email, password, phone, role }) => {
+export const registerUser = async ({ name, email, password, phone}) => {
     try {
-        const response = await axios.post("http://localhost:8080/auth/register", {
+        const response = await axios.post("https://pjsofttech.in/auth/register", {
             name,
             email,
             password,
             phone,
-            role: role.toUpperCase().replace(" ", "_"), 
         });
+        return response.data;
     }
        catch (error) {
         console.error("Registration failed:", error.response?.data || error.message);
@@ -40,35 +40,38 @@ export const registerUser = async ({ name, email, password, phone, role }) => {
     }
 };
 
-export const loginUser = async (email, password,role) => {
-    try {
-        return await axios.post("http://localhost:8080/auth/login", {
-            email,
-            password,
-            role,
-        });
-       
-    } catch (error) {
-        console.error("Login failed:", error.response?.data || error.message);
-        throw error;
-    }
+export const loginUser = async (email, password) => {
+  try {
+      const res = await axios.post("https://pjsofttech.in/auth/login", {
+          email,
+          password,
+      });
+      sessionStorage.setItem("token", res.data.jwtToken);
+      return res; 
+  } catch (error) {
+      console.error("Login failed:", error.response?.data || error.message);
+      throw error;
+  }
 }
 
 const API = axios.create({
-  baseURL: "http://localhost:8080", 
+  baseURL: "https://pjsofttech.in:44443", 
+  //  baseURL: "http://localhost:8080"
 });
 
 
 API.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("token");
-  console.log(sessionStorage.getItem("token"));
-  console.log("Token in interceptor:", token); 
+  console.log("Token from sessionStorage:", token);
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.log("Token is missing. Please authenticate again.");
   }
   return config;
 });
+
 
 export const addDepartment = (data) => {
     return API.post("/departments/create", data)
@@ -90,7 +93,7 @@ export const deleteDepartment = (id) => {
   };
 
 export const getDepartmentById = (id) => {
-    return API.get(`/departments/${id}`);
+    return API.get(`/departments/getDepartmentById/${id}`);
 }
 
 
@@ -168,22 +171,33 @@ export const updateTeam = async (id, teamData) => {
     try {
       const response = await API.put(
         `/teams/${id}`,teamData);
-      return response.data;
+        console.log("API response:", response);
+      return response;
     } catch (error) {
       console.error("Error updating team:", error.response?.data || error);
       throw error;
     }
   };
 
-  export const addTeamMember = (data) => {
-    return API.post("/team-members/createTeamMember", data);
+  export const addTeamMember = async (data) => {
+    try {
+      const response = await API.post("/team-members/create", data, {
+        headers: {
+          "Content-Type": "multipart/form-data"
+        }
+      }); 
+      console.log("API Response:", response.data);
+      return response;
+    } catch (error) {
+      console.error("API Error:", error.response ? error.response.data : error);
+      throw error;
+    }
   };
-
 
 export const getAllMembers = async () => {
     console.log("Retrieved Token:");
     try {
-        const response = await API.get("/team-members/getAllTeamMember");
+        const response = await API.get("/team-members/members");
         console.log("API Response:", response.data);
         return response;
     } catch (error) {
@@ -193,30 +207,105 @@ export const getAllMembers = async () => {
 };
 
  export const deleteTeamMember = (id) =>{
-    return API.delete(`/team-members/deleteTeamMember/${id}`);
+    return API.delete(`/team-members/delete/${id}`);
  }
 
 export const getMemberById = (id) => {
-    return API.get(`/team-members/getByIdTeamMember/${id}`);  
+    return API.get(`/team-members/${id}`);  
 }
 
-export const updateMember = (id,member) => {
-    return API.put(`/team-members/updateTeamMember/${id}`,member);  
+export const updateTeamMember = (id,member) => {
+    return API.put(`/team-members/update/${id}`,member);  
 }
 
 export const MakeLeader = (id) => {
-    return API.put(`/team-members/make-leader/${id}`);  
+    return API.put(`/team-members/promote/${id}`);  
 }
 
-
 export const addProject = (data) => {
-    return API.post("/Project/addProject", data);
+    const response =  API.post("/Project/addProject", data);
+    console.log("API Response:", response.data);
+    return response;
   };
 
   
   export const getAllProjects = async () => {
     try {
         const response = await API.get("/Project/getAllProjects");
+        return response;
+    } catch (error) {
+        console.error("API Error:", error.response ? error.response.data : error);
+        throw error;
+    }
+};
+
+  export const deleteProjects = (id) =>{
+    return API.delete(`/Project/deleteProject/${id}`);
+ }
+
+ export const updateProject = async (id,project) =>{
+  try{
+      return await API.put(`Project/updateProject/${id}`, project );
+  } catch (error) {
+      console.error(error)
+  }
+}
+
+ export const AddTaskToMember = async (taskData, id) => {
+  const token = sessionStorage.getItem("token");
+  try {
+    const response = await API.post(`tasks/create/${id}`, taskData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log(response.data);
+    return response;
+  } catch (error) {
+    if (error.response) {
+      console.error("API Error:", error.response.data);
+    }
+    console.error("Error creating task:", error);
+    throw error;
+  }
+};
+
+export const AddTaskToLeader = async (taskData, id) => {
+  const token = sessionStorage.getItem("token");
+  try {
+    const response = await API.post(`tasks/create/Leader/${id}`, taskData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log(response.data);
+    return response;
+  } catch (error) {
+    if (error.response) {
+      console.error("API Error:", error.response.data);
+    }
+    console.error("Error creating task:", error);
+    throw error;
+  }
+};
+
+  export const deleteTask = (id) =>{
+    return API.delete(`/tasks/${id}`);
+ }
+ 
+ export const updateTask = async (id,task) =>{
+    try{
+        return await API.put(`/tasks/${id}`, task );
+    } catch (error) {
+        console.error(error)
+    }
+  }
+ 
+ export const getAllTask = async () => {
+    try {
+        const response = await API.get("/tasks/all");
         console.log("API Response:", response.data);
         return response;
     } catch (error) {
@@ -225,40 +314,85 @@ export const addProject = (data) => {
     }
 };
 
-export const deleteProjects = (id) =>{
-    return API.delete(`/Project/deleteProject/${id}`);
- }
+export const getAssignedTasksOfMember = async (id) => {
+  try {
+    const response = await API.get(`/tasks/assigned-to/member/${id}`);
+    return response; 
+  } catch (error) {
+    console.error("Error fetching assigned tasks:", error);
+    throw error; 
+  }
+};
 
- export const addTask = async (task) => {
-        return await API.post("/task/create", task);
-  };
+export const getAssignedTasksOfLeader = async (id) => {
+  try {
+    const response = await API.get(`/tasks/assigned-to/leader/${id}`);
+    return response; 
+  } catch (error) {
+    console.error("Error fetching assigned tasks:", error);
+    throw error; 
+  }
+};
 
-  export const deleteTask = (taskId) =>{
-    return API.delete(`/task/${taskId}`);
- }
- 
- export const updateTask = async (taskId,task) =>{
-    try{
-        return await API.put(`/task/${taskId}`, task );
-    } catch (error) {
-        console.error(error)
+export const getTasksByMemberEmail = async (email) => {
+  const response = await API.get(`task/tasks/member/email/${(email)}`);
+  console.log(response.data);
+  return response.data; 
+}
+
+export const getTodaysLeaderTasks = async (email) => {
+  try {
+    const response = await API.get(`/tasks/leader/today/${email}`);
+    console.log("Today's tasks response:", response.data);
+    console.log("Leader Email:", email);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching today's leader tasks:", error);
+    throw error;
+  }
+};
+
+
+export const addLeader = async (leaderData) => {
+  return await API.post('/team-leader/create',leaderData, {
+    headers: {
+      "Content-Type": "multipart/form-data"
     }
-    }
- 
- export const getAllTask = async () => {
-    try {
-        const response = await API.get("/task/all");
-        console.log("API Response:", response.data);
-        return response;
-    } catch (error) {
-        console.error("API Error:", error.response ? error.response.data : error);
-        throw error;
-    }
-}; 
+  });
+}
+export const getAllTeamLeaders = async () => {
+  return await API.get(`/team-leader/all`);
+};
+
+export const getTeamLeaderById = async (id) => {
+  return await API.get(`/team-leader/${id}`);
+};
+
+export const getTeamLeaderByEmail = (email) => {
+  return API.get(`/team-leader/email?email=${email}`);
+};
+
+export const updateTeamLeader = async (id, data) => {
+  return await API.put(`/team-leader/update/${id}`, data);
+};
+
+export const deleteTeamLeader = async (id) => {
+  return await API.delete(`/team-leader/delete/${id}`);
+};
+
+export const getAllAdmins = async () => {
+  try {
+    const response = await API.get(`/admin/getAll`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching admins:", error);
+    throw error;
+  }
+};
 
 
 export const forgotPassword = ({ email, role }) => {
-    return axios.post(`http://localhost:8080/forgetPassword/passwordRecovery`, null, {
+    return axios.post(`https://localhost:8080/forgetPassword/passwordRecovery`, null, {
       params: {
         email,
         role,
@@ -267,7 +401,7 @@ export const forgotPassword = ({ email, role }) => {
   };
   
   export const verifyOtp = ({ email, role, otp }) => {
-    return axios.post(`http://localhost:8080/forgetPassword/passwordRecovery`, null, {
+    return axios.post(`https://localhost:8080/forgetPassword/passwordRecovery`, null, {
       params: {
         email,
         role,
@@ -277,7 +411,7 @@ export const forgotPassword = ({ email, role }) => {
   };
 
   export const resetPassword = ({ email, role, newPassword, confirmPassword }) =>{
-    return axios.post(`http://localhost:8080/forgetPassword/passwordRecovery`, null, {
+    return axios.post(`https://localhost:8080/forgetPassword/passwordRecovery`, null, {
       params: {
         email,
         role,

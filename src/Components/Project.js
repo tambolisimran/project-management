@@ -27,25 +27,26 @@ import {
   getAllProjects,
   getAllBranches,
   GetAllDepartments,
-  GetAllTeams,
   deleteProjects,
+  updateProject
 } from "../Services/APIServices";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-// import { useAuth } from "./Layouts/ContextApi/AuthContext";
+import { Delete, Edit, Visibility } from "@mui/icons-material";
 
 const Project = () => {
-  // const { token } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [projects, setProjects] = useState([]);
   const [selectedProject, setSelectedProject] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [branches, setBranches] = useState([]);
-  const [teams, setTeams] = useState([]);
 
   const [add, setAdd] = useState({
     projectName: "",
@@ -57,46 +58,33 @@ const Project = () => {
     estimatedDate: "",
     statusDescription: "",
     branchName: "",
-    department: "",
-    teamName:"",
+    department: ""
   });
 
   useEffect(() => {
     fetchProjects();
     fetchBranches();
     fetchDepartments();
-    fetchTeams();
   }, []);
 
   const fetchProjects = async () => {
+    console.log("Fetching projects..."); 
+  
     try {
       const response = await getAllProjects();
-      if (response?.data && Array.isArray(response.data)) {
-        setProjects(response.data);
-      } else {
-        setProjects([]);
-      }
+      console.log(response)
+      setProjects(response?.data)
     } catch (error) {
       console.error("Error fetching projects:", error);
-      setProjects([]);
     }
   };
-
+  
   const fetchBranches = async () => {
     try {
       const response = await getAllBranches();
       setBranches(response.data || []);
     } catch (error) {
       console.error("Error fetching branches:", error);
-    }
-  };
-
-  const fetchTeams = async () => {
-    try {
-      const response = await GetAllTeams();
-      setTeams(response.data || []);
-    } catch (error) {
-      console.error("Error fetching teams:", error);
     }
   };
 
@@ -109,8 +97,6 @@ const Project = () => {
     }
   };
 
-  // const handleClickOpen = () => setOpen(true);
-  // const handleClose = () => setOpen(false);
   const handleDetailClose = () => setDetailOpen(false);
 
   const handleChange = (e) => {
@@ -121,7 +107,7 @@ const Project = () => {
     e.preventDefault();
     setOpen(false);
     try {
-      const response = await addProject(add);
+      const response = await addProject(add); 
       console.log(response.data);
       fetchProjects();
       Swal.fire("Success", "Project added successfully!", "success");
@@ -154,10 +140,54 @@ const Project = () => {
   };
 
   const handleViewDetails = (project) => {
-    console.log(project)
     setSelectedProject(project);
     setDetailOpen(true);
   };
+
+  const editProject = (project) => {
+    setAdd({
+      projectName: project.projectName || "",
+      projectCategory: project.projectCategory || "",
+      statusBar: project.statusBar || 0,
+      status: project.status || "",
+      startDate: project.startDate || "",
+      endDate: project.endDate || "",
+      estimatedDate: project.estimatedDate || "",
+      statusDescription: project.statusDescription || "",
+      branchName: project.branchName || "",
+      department: project.department || ""
+    });
+    setEditId(project.id);
+    setEditDialogOpen(true);
+  };
+  
+  const handleUpdateProject = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await updateProject(editId, add);
+      console.log(response.data);
+      fetchProjects();
+      Swal.fire("Updated", "Project updated successfully!", "success");
+      setAdd({
+        projectName: "",
+        projectCategory: "",
+        statusBar: 0,
+        status: "",
+        startDate: "",
+        endDate: "",
+        estimatedDate: "",
+        statusDescription: "",
+        branchName: "",
+        department: ""
+      });
+      setEditDialogOpen(false);
+      setEditId(null);
+    } catch (error) {
+      console.error("Error updating project:", error);
+      Swal.fire("Error", "Failed to update project.", "error");
+    }
+  };
+  
   return (
     <Container
       component={motion.div}
@@ -165,8 +195,10 @@ const Project = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      <Button variant="outlined" color="primary" sx={{mr:"55rem",mt:5}} onClick={()=>navigate(-1)}>Back</Button>
-      <Button variant="contained" color="primary" sx={{mt:5}} onClick={() => setShowForm(!showForm)}>
+      <Button variant="outlined" color="primary" sx={{ mr: "55rem", mt: 5 }} onClick={() => navigate(-1)}>
+        Back
+      </Button>
+      <Button variant="contained" color="primary" sx={{ mt: 5 }} onClick={() => setShowForm(!showForm)}>
         {showForm ? "Close Form" : "Add Project"}
       </Button>
 
@@ -182,12 +214,25 @@ const Project = () => {
               </Grid>
               <Grid item xs={12} md={6}>
                 <TextField fullWidth margin="dense" label="Project Category" name="projectCategory" value={add.projectCategory} onChange={handleChange} />
-              </Grid> 
-              <Grid item xs={12} md={4}>
-                <TextField fullWidth margin="dense" label="Status Bar (%)" name="statusBar" type="number" inputProps={{ min: 0, max: 100 }} value={add.statusBar} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
-                <TextField fullWidth label="Status" name="status" value={add.status} onChange={handleChange} required />
+                <TextField select fullWidth label="Status bar" name="statusBar" value={add.statusBar} onChange={handleChange}>
+                  {[...Array(11)].map((_, i) => (
+                    <MenuItem key={i * 10} value={i * 10}>{`${i * 10}%`}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Status</InputLabel>
+                  <Select name="status" value={add.status} onChange={handleChange} required>
+                    <MenuItem value="Not Started">Not Started</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="On Hold">On Hold</MenuItem>
+                    <MenuItem value="Completed">Completed</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                  </Select>
+                </FormControl>
               </Grid>
               <Grid item xs={12} md={4}>
                 <TextField fullWidth label="Status Description" name="statusDescription" value={add.statusDescription} onChange={handleChange} required />
@@ -202,53 +247,29 @@ const Project = () => {
                 <TextField fullWidth margin="dense" label="Estimated Date" name="estimatedDate" type="date" value={add.estimatedDate} onChange={handleChange} />
               </Grid>
               <Grid item xs={12} md={4}>
-               <FormControl fullWidth margin="dense">
-                    <InputLabel>Branch</InputLabel>
-                    <Select
-                      name="branchName"
-                      value={add?.branchName || ""}
-                      onChange={handleChange}
-                    >
-                      {branches.map((branch) => (
-                        <MenuItem key={branch.id} value={branch.branchName}>
-                          {branch.branchName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={4}>
-                  <FormControl fullWidth margin="dense">
-                    <InputLabel>Department</InputLabel>
-                    <Select
-                      name="department"
-                      value={add?.department || ""}
-                      onChange={handleChange}
-                    >
-                      {departments.map((dept) => (
-                        <MenuItem key={dept.id} value={dept.department}>
-                          {dept.department}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} md={4}>
-               <FormControl fullWidth margin="dense">
-                    <InputLabel>Team</InputLabel>
-                    <Select
-                      name="teamName"
-                      value={add?.teamName || ""}
-                      onChange={handleChange}
-                    >
-                      {teams.map((team) => (
-                        <MenuItem key={team.id} value={team.teamName}>
-                          {team.teamName}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Branch</InputLabel>
+                  <Select name="branchName" value={add.branchName || ""} onChange={handleChange}>
+                    {branches.map((branch) => (
+                      <MenuItem key={branch.id} value={branch.branchName}>
+                        {branch.branchName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth margin="dense">
+                  <InputLabel>Department</InputLabel>
+                  <Select name="department" value={add.department || ""} onChange={handleChange}>
+                    {departments.map((dept) => (
+                      <MenuItem key={dept.id} value={dept.department}>
+                        {dept.department}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
               <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
                   Add Project
@@ -265,7 +286,8 @@ const Project = () => {
           <TableContainer>
             <Table>
               <TableHead>
-                <TableRow>
+                <TableRow sx={{background:"lightgrey",fontSize:"bold"}}>
+                  <TableCell><b>ID</b></TableCell>
                   <TableCell><b>Project Name</b></TableCell>
                   <TableCell><b>Status</b></TableCell>
                   <TableCell><b>Progress</b></TableCell>
@@ -275,16 +297,21 @@ const Project = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {projects.map((project) => (
+                {projects.length > 0 && projects?.map((project) => (
                   <TableRow key={project.id}>
+                    <TableCell>{project.id}</TableCell>
                     <TableCell>{project.projectName}</TableCell>
                     <TableCell>{project.status}</TableCell>
                     <TableCell><LinearProgress variant="determinate" value={project.statusBar || 0} /></TableCell>
                     <TableCell>{project.startDate}</TableCell>
                     <TableCell>{project.endDate}</TableCell>
                     <TableCell>
-                      <Button variant="outlined" onClick={() => handleViewDetails(project)}>View</Button>
-                      <Button variant="contained" onClick={() => handleDelete(project?.id)} sx={{ ml: 2, backgroundColor: "#fb6f92", color: "white" }}>Delete</Button>
+                      <Visibility variant="outlined" onClick={() => handleViewDetails(project)} sx={{ color: "#3F51B5", cursor: "pointer", mr: 1 }} />
+                      <Edit
+                      sx={{ color: "#1976D2", cursor: "pointer", mr: 1 }}
+                      onClick={() => editProject(project)}
+                    />
+                      <Delete variant="contained" onClick={() => handleDelete(project?.id)} sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }} />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -297,22 +324,95 @@ const Project = () => {
       <Dialog open={detailOpen} onClose={handleDetailClose}>
         <DialogTitle>Project Details</DialogTitle>
         <DialogContent>
-          {selectedProject && 
-          <Typography><strong>Project Name:</strong>{selectedProject.projectName}</Typography>}
-          <Typography><strong>Project Category:</strong>{selectedProject?.projectCategory}</Typography>
-          <Typography><strong>Status Bar:</strong>{selectedProject?.statusBar}</Typography>
-          <Typography><strong>Status:</strong>{selectedProject?.status}</Typography>
-          <Typography><strong>Start Date:</strong>{selectedProject?.startDate}</Typography>
-          <Typography><strong>End Date:</strong>{selectedProject?.endDate}</Typography>
-          <Typography><strong>Estimated Date:</strong>{selectedProject?.estimatedDate}</Typography>
-          <Typography><strong>Status Description:</strong>{selectedProject?.statusDescription}</Typography>
-          <Typography><strong>Branch Name:</strong>{selectedProject?.branchName}</Typography>
-          <Typography><strong>Department:</strong>{selectedProject?.department}</Typography>
-          <Typography><strong>Team:</strong>{selectedProject?.teamName}</Typography>
+          {selectedProject && (
+            <>
+              <Typography><strong>Project Name:</strong> {selectedProject.projectName}</Typography>
+              <Typography><strong>Project Category:</strong> {selectedProject?.projectCategory}</Typography>
+              <Typography><strong>Status Bar:</strong> {selectedProject?.statusBar}</Typography>
+              <Typography><strong>Status:</strong> {selectedProject?.status}</Typography>
+              <Typography><strong>Start Date:</strong> {selectedProject?.startDate}</Typography>
+              <Typography><strong>End Date:</strong> {selectedProject?.endDate}</Typography>
+              <Typography><strong>Estimated Date:</strong> {selectedProject?.estimatedDate}</Typography>
+              <Typography><strong>Status Description:</strong> {selectedProject?.statusDescription}</Typography>
+              <Typography><strong>Branch Name:</strong> {selectedProject?.branchName}</Typography>
+              <Typography><strong>Department:</strong> {selectedProject?.department}</Typography>
+            </>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDetailClose} variant="contained">Close</Button>
         </DialogActions>
+      </Dialog>  
+
+      <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Edit Project</DialogTitle>
+        <form onSubmit={handleUpdateProject}>
+          <DialogContent>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Project Name" name="projectName" value={add.projectName} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Project Category" name="projectCategory" value={add.projectCategory} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select name="status" value={add.status} onChange={handleChange}>
+                    <MenuItem value="Not Started">Not Started</MenuItem>
+                    <MenuItem value="In Progress">In Progress</MenuItem>
+                    <MenuItem value="On Hold">On Hold</MenuItem>
+                    <MenuItem value="Completed">Completed</MenuItem>
+                    <MenuItem value="Cancelled">Cancelled</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField select fullWidth label="Status Bar" name="statusBar" value={add.statusBar} onChange={handleChange}>
+                  {[...Array(11)].map((_, i) => (
+                    <MenuItem key={i * 10} value={i * 10}>{`${i * 10}%`}</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField fullWidth label="Status Description" name="statusDescription" value={add.statusDescription} onChange={handleChange} />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField fullWidth type="date" label="Start Date" name="startDate" value={add.startDate} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField fullWidth type="date" label="End Date" name="endDate" value={add.endDate} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField fullWidth type="date" label="Estimated Date" name="estimatedDate" value={add.estimatedDate} onChange={handleChange} InputLabelProps={{ shrink: true }} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Branch</InputLabel>
+                  <Select name="branchName" value={add.branchName} onChange={handleChange}>
+                    {branches.map((branch) => (
+                      <MenuItem key={branch.id} value={branch.branchName}>{branch.branchName}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Department</InputLabel>
+                  <Select name="department" value={add.department} onChange={handleChange}>
+                    {departments.map((dept) => (
+                      <MenuItem key={dept.id} value={dept.department}>{dept.department}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditDialogOpen(false)} color="secondary">Cancel</Button>
+            <Button type="submit" variant="contained" color="primary">Update Project</Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </Container>
   );

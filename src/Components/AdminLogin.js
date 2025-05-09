@@ -25,7 +25,7 @@ const schema = yup.object().shape({
   role: yup.string().required("Role is required"),
 });
 
-const UserRole = ["ADMIN", "TEAM_MEMBER"];
+const UserRole = ["ADMIN", "TEAM_LEADER"];
 
 
 const AdminLogin = () => {
@@ -40,14 +40,13 @@ const AdminLogin = () => {
 
   const onSubmit = async (data) => {
     try {
-      const response = await loginUser(data.email, data.password, data.role);
+      const response = await loginUser(data.email, data.password);
       console.log(response.data)
       // const { jwtToken, role } = response.data;
-      sessionStorage.setItem("token", response.data.jwtToken)
-      console.log('Token stored:', sessionStorage.getItem('token'));
+      sessionStorage.setItem("token", response.data.jwtToken);
       console.log('Full response:', response);
         if (response.data.role === "ADMIN") navigate('/admin-dashboard');
-        // else if (response.data.role === "TEAM_LEADER") navigate('/leader-dashboard');
+        else if (response.data.role === "TEAM_LEADER") navigate('/team-leader-dashboard');
         else if (response.data.role === "TEAM_MEMBER") navigate('/member-dashboard');
     } catch (error) {
       console.error("Error in form submission:", error.response?.data || error.message);
@@ -96,7 +95,7 @@ const AdminLogin = () => {
     try {
       const response = await forgotPassword({
         email: email.trim(),
-        role: role // Use selected role instead of hardcoded 'ADMIN'
+        role: role 
       });
       console.log(response.data);
       setStep(2);
@@ -153,7 +152,6 @@ const AdminLogin = () => {
       setError(error.response?.data?.message || "Failed to reset password");
     }
   };
-  
 
   return (
     <Container maxWidth="sm" sx={{ mt: 5, textAlign: "center" }}>
