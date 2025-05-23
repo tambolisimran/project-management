@@ -93,24 +93,6 @@ const Role = () => {
     }
 };
 
-const handleGetById = async (id) => {
-  if (!id) {
-    Swal.fire("Error", "Invalid Role ID", "error");
-    return;
-  }
-  try {
-    const response = await getRoleById(id);
-    if (response.data) {
-      setSelectedRole(response.data);
-      setDetailOpen(true);
-    } else {
-      Swal.fire("Error", "Role not found!", "error");
-    }
-  } catch (error) {
-    console.error("Error fetching role details:", error);
-    Swal.fire("Error", "Failed to fetch role details.", "error");
-  }
-};
 
   return (
     <>
@@ -120,7 +102,7 @@ const handleGetById = async (id) => {
               {showForm ? "Close Form" : "Add Role"}
             </Button>
             {showForm ? (
-                    <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+                    <Paper elevation={3} sx={{ padding: 2, marginTop: 3 }}>
                       <Typography variant="h5" gutterBottom>
                         Create Role
                       </Typography>
@@ -160,7 +142,6 @@ const handleGetById = async (id) => {
                       <TableCell>{rol.id}</TableCell>
                       <TableCell>{rol.roleName}</TableCell>
                       <TableCell>
-                        {/* <Visibility onClick={() => handleGetById(rol.id)} sx={{ color: "#3F51B5", cursor: "pointer", mr: 1 }} /> */}
                         <Delete onClick={() => handleDelete(rol.id)} sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }} />
                       </TableCell>
                     </TableRow>

@@ -49,11 +49,9 @@ const TodaysTask = () => {
     
   const handleStatusChange = async (taskId) => {
     try {
-      // Simulate API call to update task status (you can integrate your API call here)
-      // await updateTaskStatus(taskId, "COMPLETED"); // Adjust according to your API
+      // await updateTaskStatus(taskId, "COMPLETED"); 
       Swal.fire("Success", "Task marked as completed", "success");
-  
-      // Update the task status in the state
+
       setTasks(prevTasks =>
         prevTasks.map(task => 
           task.taskId === taskId 
@@ -77,13 +75,13 @@ const TodaysTask = () => {
         Back
       </Button>
       <Typography variant="h4" sx={{ mt: 3, mb: 2 }}>
-        Today's Tasks for {leader.name}
+        Today's Tasks of {leader.name}
       </Typography>
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
-            <TableRow>
+            <TableRow sx={{background:"lightgrey",fontSize:"bold"}}>
               <TableCell><b>ID</b></TableCell>
               <TableCell><b>Subject</b></TableCell>
               <TableCell><b>Description</b></TableCell>

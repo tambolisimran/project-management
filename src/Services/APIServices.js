@@ -26,7 +26,7 @@ import  axios  from "axios"
 //   ****************** common login for all ***********************
 export const registerUser = async ({ name, email, password, phone}) => {
     try {
-        const response = await axios.post("https://pjsofttech.in/auth/register", {
+        const response = await axios.post("http://localhost:8080/auth/register", {
             name,
             email,
             password,
@@ -40,11 +40,12 @@ export const registerUser = async ({ name, email, password, phone}) => {
     }
 };
 
-export const loginUser = async (email, password) => {
+export const loginUser = async (email, password,role) => {
   try {
-      const res = await axios.post("https://pjsofttech.in/auth/login", {
+      const res = await axios.post("http://localhost:8080/auth/login", {
           email,
           password,
+          role,
       });
       sessionStorage.setItem("token", res.data.jwtToken);
       return res; 
@@ -55,8 +56,8 @@ export const loginUser = async (email, password) => {
 }
 
 const API = axios.create({
-  baseURL: "https://pjsofttech.in:44443", 
-  //  baseURL: "http://localhost:8080"
+  // baseURL: "https://pjsofttech.in:44443", 
+   baseURL: "http://localhost:8080"
 });
 
 
@@ -169,9 +170,8 @@ export const getTeamById = (id) => {
 
 export const updateTeam = async (id, teamData) => {
     try {
-      const response = await API.put(
-        `/teams/${id}`,teamData);
-        console.log("API response:", response);
+      const response = await API.put(`/teams/${id}`,teamData);
+      console.log("API response:", response);
       return response;
     } catch (error) {
       console.error("Error updating team:", error.response?.data || error);
@@ -251,6 +251,13 @@ export const addProject = (data) => {
   }
 }
 
+export const assignProjectToTeam = (projectId, teamId) => {
+  return API.put(`/Project/assignProjectToTeam/${projectId}/assign/${teamId}`);
+};
+export const getProjectByName = (name) => {
+  return API.get(`/Project/getProjectByName/${name}`);
+};
+
  export const AddTaskToMember = async (taskData, id) => {
   const token = sessionStorage.getItem("token");
   try {
@@ -291,13 +298,43 @@ export const AddTaskToLeader = async (taskData, id) => {
   }
 };
 
+
+export const LeaderAssignTaskToMember = async (formData, leaderId,memberId) => {
+  const token = sessionStorage.getItem("token");
+
+  // console.log(formData);
+  // const formData = new FormData()
+  // formData.append("task", taskData)
+  
+  try {
+    const response = await API.post(`tasks/leader/${leaderId}/assign-to-member/${memberId}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    console.log(response.data);
+    return response;
+  } catch (error) {
+    if (error.response) {
+      console.error("API Error:", error.response.data);
+    }
+    console.error("Error creating task:", error);
+    throw error;
+  }
+};
+
+export const getTasksAssignedByLeader = (id) => {
+  return API.get(`/tasks/assigned-by/leader/${id}`);
+};
+
   export const deleteTask = (id) =>{
     return API.delete(`/tasks/${id}`);
  }
  
  export const updateTask = async (id,task) =>{
     try{
-        return await API.put(`/tasks/${id}`, task );
+        return await API.put(`/tasks/${id}`, task);
     } catch (error) {
         console.error(error)
     }
@@ -392,7 +429,7 @@ export const getAllAdmins = async () => {
 
 
 export const forgotPassword = ({ email, role }) => {
-    return axios.post(`https://localhost:8080/forgetPassword/passwordRecovery`, null, {
+    return API.post(`/forgetPassword/passwordRecovery`, null, {
       params: {
         email,
         role,
@@ -401,7 +438,7 @@ export const forgotPassword = ({ email, role }) => {
   };
   
   export const verifyOtp = ({ email, role, otp }) => {
-    return axios.post(`https://localhost:8080/forgetPassword/passwordRecovery`, null, {
+    return API.post(`/forgetPassword/passwordRecovery`, null, {
       params: {
         email,
         role,
@@ -411,7 +448,7 @@ export const forgotPassword = ({ email, role }) => {
   };
 
   export const resetPassword = ({ email, role, newPassword, confirmPassword }) =>{
-    return axios.post(`https://localhost:8080/forgetPassword/passwordRecovery`, null, {
+    return API.post(`/forgetPassword/passwordRecovery`, null, {
       params: {
         email,
         role,

@@ -5,7 +5,6 @@ import {
   Container,
   TextField,
   Typography,
-  Stack,
   MenuItem,
   Table,
   TableBody,
@@ -18,11 +17,17 @@ import {
   Zoom,
   DialogContent,
   Dialog,
+  Box,
+  LinearProgress,
+  DialogTitle,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
 import { motion } from "framer-motion";
 import Swal from "sweetalert2";
-import { AddTaskToLeader,AddTaskToMember, getAssignedTasksOfMember, getAssignedTasksOfLeader} from "../Services/APIServices";
+import { AddTaskToLeader,AddTaskToMember, getAssignedTasksOfMember, getAssignedTasksOfLeader, updateTask,deleteTask} from "../Services/APIServices";
 import { useParams } from 'react-router-dom';
+import { Delete, Edit } from "@mui/icons-material";
 
 const AddTask = () => {
   const { id } = useParams(); 
@@ -49,6 +54,7 @@ const AddTask = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [open, setOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState({});
 const [selectedImage, setSelectedImage] = useState('');
 
 useEffect(() => {
@@ -168,7 +174,100 @@ useEffect(() => {
       Swal.fire("Error", "Failed to assign task", "error");
     }
   };
-  
+
+   const handleUpdateChange = (e) => {
+        const { name, value } = e.target;
+        setSelectedTask((prev) => ({
+          ...prev,
+          [name]: value,
+        }));
+      };
+
+      const handleUpdate = async (e) => {
+        e.preventDefault();
+        setOpen(false);
+        try {
+          const response = await updateTask(selectedTask.id, selectedTask);
+
+          if (response && response.data) {
+            console.log("Updated Task Response:", response.data);
+            setTasks((prevTask) =>
+              prevTask.map((tsk) =>
+                tsk.id === selectedTask.id ? { ...tsk, ...selectedTask } : tsk
+              )
+            );
+
+            Swal.fire("Success", "Task updated successfully!", "success");
+          } else {
+            throw new Error("Empty response from updateTask");
+          }
+
+          setSelectedTask({
+            name: "",
+            email: "",
+            password: "",
+            roleName: "",
+            phone: "",
+            department: "",
+            branchName: "",
+            imageUrl: null,
+            address: "",
+            joinDate: "",
+            projectName: "",
+          });
+
+        } catch (error) {
+          console.error("Error updating task:", error);
+          Swal.fire(
+            "Error",
+            `Failed to update task: ${error?.response?.data?.message || error.message || "Unknown error"}`,
+            "error"
+          );
+        }
+      };
+
+            const handleImageChange = (e) => {
+              const file = e.target.files[0];
+              setSelectedTask((prev) => ({
+                ...prev,
+                file: file,
+              }));
+            };
+
+             const handleUpdateClick = (tasks) => {
+        setSelectedTask(tasks);
+        setOpen(true);
+      };
+
+      const handleCloseDialog = () => {
+        setOpen(false);
+        setSelectedTask({}); 
+      };
+        
+      const handleDelete = async (id) => {
+            const result = await Swal.fire({
+              title: "Are you sure?",
+              text: "This action cannot be undone!",
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonText: "Yes, delete it!",
+              cancelButtonText: "Cancel",
+            });
+        
+            if (result.isConfirmed) {
+              try {
+                const response = await deleteTask(id);
+                console.log(response.data);
+                setTasks(tasks.filter((tsk) => tsk.id !== id));
+                Swal.fire("Deleted!", "Task has been deleted.", "success");
+              } catch (error) {
+                console.error("Error deleting Task:", error);
+                Swal.fire("Error", "Failed to delete Task.", "error");
+              }
+            }
+          };
+      
+            
    
   return (
     <Container
@@ -250,6 +349,8 @@ useEffect(() => {
                   <MenuItem value="Pending">Pending</MenuItem>
                   <MenuItem value="In Progress">In Progress</MenuItem>
                   <MenuItem value="Completed">Completed</MenuItem>
+                  <MenuItem value="On Hold">On Hold</MenuItem>
+                  <MenuItem value="Upcoming">Upcoming</MenuItem>
                 </TextField>
               </Grid>
 
@@ -358,7 +459,7 @@ useEffect(() => {
                     <TableCell><b>End Date</b></TableCell>
                     <TableCell><b>Days</b></TableCell>
                     <TableCell><b>Image</b></TableCell>
-                    
+                    <TableCell><b>Action</b></TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -370,26 +471,36 @@ useEffect(() => {
                       <TableCell>{task.projectName}</TableCell>
                       <TableCell>{task.priority}</TableCell>
                       <TableCell>{task.status}</TableCell>
-                      <TableCell>{task.statusBar}</TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box sx={{ width: '100%', mr: 1 }}>
+                            <LinearProgress variant="determinate" value={task.statusBar || 0} />
+                          </Box>
+                          <Box sx={{ minWidth: 35 }}>
+                            <Typography variant="body2" color="text.secondary">
+                              {`${Math.round(task.statusBar || 0)}%`}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </TableCell>
                       <TableCell>{task.startDate}</TableCell>
                       <TableCell>{task.endDate}</TableCell>
                       <TableCell>{task.days}</TableCell>
                       <TableCell>
                       {task.imageUrl ? (
-                        <img
-                          src={task.imageUrl}
-                          alt="task"
-                          style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '4px', cursor: 'pointer' }}
-                          onClick={() => {
-                            setSelectedImage(task.imageUrl);
-                            setOpen(true);
-                          }}
-                        />
+                        <img src={task.imageUrl} alt="profile" style={{ width: 50, height: 50, objectFit: 'cover' }} />
                       ) : (
-                        'No Image'
+                        <Typography variant="body2" color="text.secondary">
+                          No Image
+                        </Typography>
                       )}
                     </TableCell>
-
+                    <TableCell>
+                      <IconButton color="primary" size="small" onClick={() => handleUpdateClick(task)}>
+                        <Edit />
+                      </IconButton>
+                      <Delete onClick={() => handleDelete(task.id)} sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }} />
+                    </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -419,6 +530,140 @@ useEffect(() => {
               />
             </DialogContent>
           </Dialog>
+          <Dialog open={open} onClose={handleCloseDialog} fullWidth maxWidth="md">
+  <DialogTitle>Update Task</DialogTitle>
+  <DialogContent>
+    <Grid container spacing={2}>
+      <Grid item xs={12} md={6}>
+        <TextField
+          name="subject"
+          label="Subject"
+          fullWidth
+          value={selectedTask.subject || ""}
+          onChange={handleUpdateChange}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          name="description"
+          label="Description"
+          fullWidth
+          value={selectedTask.description || ""}
+          onChange={handleUpdateChange}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          name="projectName"
+          label="Project Name"
+          fullWidth
+          value={selectedTask.projectName || ""}
+          onChange={handleUpdateChange}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          select
+          name="priority"
+          label="Priority"
+          fullWidth
+          value={selectedTask.priority || ""}
+          onChange={handleUpdateChange}
+        >
+          <MenuItem value="Low">Low</MenuItem>
+          <MenuItem value="Medium">Medium</MenuItem>
+          <MenuItem value="High">High</MenuItem>
+        </TextField>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          select
+          name="status"
+          label="Status"
+          fullWidth
+          value={selectedTask.status || ""}
+          onChange={handleUpdateChange}
+        >
+          <MenuItem value="Pending">Pending</MenuItem>
+          <MenuItem value="In Progress">In Progress</MenuItem>
+          <MenuItem value="Completed">Completed</MenuItem>
+          <MenuItem value="On Hold">On Hold</MenuItem>
+          <MenuItem value="Upcoming">Upcoming</MenuItem>
+        </TextField>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          select
+          name="statusBar"
+          label="Status Bar"
+          fullWidth
+          value={selectedTask.statusBar || ""}
+          onChange={handleUpdateChange}
+        >
+          {[...Array(11)].map((_, i) => (
+            <MenuItem key={i * 10} value={i * 10}>
+              {`${i * 10}%`}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          name="startDate"
+          label="Start Date"
+          type="date"
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+          value={selectedTask.startDate || ""}
+          onChange={handleUpdateChange}
+        />
+      </Grid>
+      <Grid item xs={12} md={6}>
+        <TextField
+          name="endDate"
+          label="End Date"
+          type="date"
+          fullWidth
+          InputLabelProps={{ shrink: true }}
+          value={selectedTask.endDate || ""}
+          onChange={handleUpdateChange}
+        />
+      </Grid>
+      <Grid item xs={12} md={4}>
+        <TextField name="days" label="Days" value={formData.days} fullWidth InputProps={{  readOnly: true, }}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <Button
+          variant="contained"
+          component="label"
+          fullWidth
+        >
+          Upload Image
+          <input type="file" hidden onChange={handleImageChange} />
+        </Button>
+      </Grid>
+    </Grid>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseDialog}>Cancel</Button>
+    <Button variant="contained" color="primary" onClick={handleUpdate}>
+      Update Task
+    </Button>
+  </DialogActions>
+</Dialog>
+                <Dialog open={Boolean(selectedImage)} onClose={() => setSelectedImage("")} maxWidth="sm" fullWidth>
+                  <DialogTitle>Task Image</DialogTitle>
+                  <DialogContent>
+                    <img src={selectedImage} alt="Task Preview" style={{ width: "100%" }} />
+                  </DialogContent>
+                  <DialogActions>
+                    <Button onClick={() => setSelectedImage("")} color="primary">
+                      Close
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+
 
     </Container>
   );

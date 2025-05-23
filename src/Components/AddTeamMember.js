@@ -9,7 +9,6 @@ import  { createFilterOptions } from '@mui/material/Autocomplete';
 
 const AddTeamMember = () => {
   const navigate = useNavigate();
-  const [updatedImage, setUpdatedImage] = useState(null);
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
   const [members, setMembers] = useState([]);
@@ -107,7 +106,6 @@ const AddTeamMember = () => {
   };
 
 
- 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setOpen(false);
@@ -157,14 +155,15 @@ const AddTeamMember = () => {
   
 
 const handlePromoteToLeader = async (member) => {
+    if (!member) return;
   if (member.userRole === "TEAM_LEADER") {
-    Swal.fire("Already a Leader", `${member.name} is already a Team Leader`, "info");
+    Swal.fire("Already a Leader", `${member?.name} is already a Team Leader`, "info");
     return;
   }
 
   const result = await Swal.fire({
     title: "Promote to Leader?",
-    text: `Are you sure you want to promote ${member.name} to Team Leader?`,
+    text: `Are you sure you want to promote ${member?.name} to Team Leader?`,
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Yes, promote!",
@@ -182,7 +181,7 @@ const handlePromoteToLeader = async (member) => {
       );
       setMembers(updatedMembers);
 
-      Swal.fire("Promoted", `${member.name} is now a Team Leader`, "success");
+      Swal.fire("Promoted", `${member?.name} is now a Team Leader`, "success");
     } catch (error) {
       console.error("Error promoting member:", error);
       Swal.fire("Error", "Failed to promote member.", "error");
@@ -285,7 +284,7 @@ const handlePromoteToLeader = async (member) => {
 
       const handleCloseDialog = () => {
         setOpen(false);
-        setSelectedMember(null); 
+        setSelectedMember({}); 
       };
 
       const filter = createFilterOptions(); 
@@ -346,7 +345,7 @@ const handlePromoteToLeader = async (member) => {
           </Grid>
         </Grid>
     {showmembers ? (
-        <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+        <Paper elevation={3} sx={{ padding: 2, marginTop: 3 }}>
           <Typography variant="h5" gutterBottom>
             Create Member
           </Typography>
@@ -424,21 +423,14 @@ const handlePromoteToLeader = async (member) => {
                 </FormControl>
               </Grid>
               <Grid item xs={12} md={4}>
-                                        <Button variant="contained" component="label" fullWidth>
-                                          Upload Image
-                                          <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) =>
-                                    setNewMember((prev) => ({
-                                      ...prev,
-                                      file: e.target.files[0],
-                                    }))
-                                  }
-                                />
-
-                                        </Button>
-                                      </Grid>
+                <Button variant="contained" component="label" fullWidth>
+                    Upload Image
+                    <input type="file" accept="image/*" onChange={(e) => setNewMember((prev) => ({ ...prev, file: e.target.files[0],
+                      }))
+                    }
+                  />
+                </Button>
+              </Grid>
             <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
                   Add Member
@@ -472,7 +464,7 @@ const handlePromoteToLeader = async (member) => {
                  {Array.isArray(members) && members.map(member => (
                     <TableRow key={member.id}>
                       <TableCell>{member.id}</TableCell>
-                      <TableCell>{member.name}</TableCell>
+                      <TableCell>{member?.name}</TableCell>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>{member.department}</TableCell>
                       <TableCell>{member.roleName}</TableCell>
@@ -559,7 +551,7 @@ const handlePromoteToLeader = async (member) => {
           <DialogContent>
             {selectedMember && (
               <>
-                <Typography><strong>Name:</strong> {selectedMember.name || "N/A"}</Typography>
+                <Typography><strong>Name:</strong> {selectedMember?.name || "N/A"}</Typography>
                 <Typography><strong>Email:</strong> {selectedMember.email || "N/A"}</Typography>
                 <Typography><strong>Phone:</strong> {selectedMember.phone || "N/A"}</Typography>
                 <Typography><strong>Address:</strong> {selectedMember.address || "N/A"}</Typography>
@@ -578,14 +570,14 @@ const handlePromoteToLeader = async (member) => {
         <Dialog open={open && Boolean(selectedMember)} onClose={handleCloseDialog} maxWidth="md" fullWidth>
           <DialogTitle>Update Team Member</DialogTitle>
           <DialogContent dividers>
-            <members id="updateMembermembers" onSubmit={handleUpdate}>
+            <form id="updateMembermembers" onSubmit={handleUpdate}>
               <Grid container spacing={2}>
                 <Grid item xs={12} md={4}>
                   <TextField
                     fullWidth
                     label="Name"
                     name="name"
-                    value={selectedMember.name || ""}
+                    value={selectedMember?.name || ""}
                     onChange={handleUpdateChange}
                     required
                   />
@@ -596,7 +588,7 @@ const handlePromoteToLeader = async (member) => {
                     fullWidth
                     label="Email"
                     name="email"
-                    value={selectedMember.email || ""}
+                    value={selectedMember?.email || ""}
                     onChange={handleUpdateChange}
                     required
                   />
@@ -609,7 +601,7 @@ const handlePromoteToLeader = async (member) => {
                     label="Password"
                     name="password"
                     type="password"
-                    value={selectedMember.password || ""}
+                    value={selectedMember?.password || ""}
                     onChange={handleUpdateChange}
                   />
                 </Grid>
@@ -622,17 +614,17 @@ const handlePromoteToLeader = async (member) => {
                     name="joinDate"
                     type="date"
                     InputLabelProps={{ shrink: true }}
-                    value={selectedMember.joinDate || ""}
+                    value={selectedMember?.joinDate || ""}
                     onChange={handleUpdateChange}
                   />
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                  <membersControl fullWidth margin="dense">
+                  <FormControl fullWidth margin="dense">
                     <InputLabel>Department</InputLabel>
                     <Select
                       name="department"
-                      value={selectedMember.department || ""}
+                      value={selectedMember?.department || ""}
                       onChange={handleUpdateChange}
                     >
                       <MenuItem value="">Select Department</MenuItem>
@@ -642,7 +634,7 @@ const handlePromoteToLeader = async (member) => {
                         </MenuItem>
                       ))}
                     </Select>
-                  </membersControl>
+                  </FormControl>
                 </Grid>
 
                 <Grid item xs={12} md={4}>
@@ -651,7 +643,7 @@ const handlePromoteToLeader = async (member) => {
                     margin="dense"
                     label="Phone"
                     name="phone"
-                    value={selectedMember.phone || ""}
+                    value={selectedMember?.phone || ""}
                     onChange={handleUpdateChange}
                   />
                 </Grid>
@@ -662,17 +654,17 @@ const handlePromoteToLeader = async (member) => {
                     margin="dense"
                     label="Address"
                     name="address"
-                    value={selectedMember.address || ""}
+                    value={selectedMember?.address || ""}
                     onChange={handleUpdateChange}
                   />
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                  <membersControl fullWidth margin="dense">
+                  <FormControl fullWidth margin="dense">
                     <InputLabel>Role Name</InputLabel>
                     <Select
                       name="roleName"
-                      value={selectedMember.roleName || ""}
+                      value={selectedMember?.roleName || ""}
                       onChange={handleUpdateChange}
                     >
                       <MenuItem value="">Select Roles</MenuItem>
@@ -682,15 +674,15 @@ const handlePromoteToLeader = async (member) => {
                         </MenuItem>
                       ))}
                     </Select>
-                  </membersControl>
+                  </FormControl>
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                  <membersControl fullWidth margin="dense">
+                  <FormControl fullWidth margin="dense">
                     <InputLabel>Project Name</InputLabel>
                     <Select
                       name="projectName"
-                      value={selectedMember.projectName || ""}
+                      value={selectedMember?.projectName || ""}
                       onChange={handleUpdateChange}
                     >
                       <MenuItem value="">Select Project</MenuItem>
@@ -700,15 +692,15 @@ const handlePromoteToLeader = async (member) => {
                         </MenuItem>
                       ))}
                     </Select>
-                  </membersControl>
+                  </FormControl>
                 </Grid>
 
                 <Grid item xs={12} md={4}>
-                  <membersControl fullWidth margin="dense">
+                  <FormControl fullWidth margin="dense">
                     <InputLabel>Branch</InputLabel>
                     <Select
                       name="branchName"
-                      value={selectedMember.branchName || ""}
+                      value={selectedMember?.branchName || ""}
                       onChange={handleUpdateChange}
                     >
                       <MenuItem value="">Select Branch</MenuItem>
@@ -718,26 +710,22 @@ const handlePromoteToLeader = async (member) => {
                         </MenuItem>
                       ))}
                     </Select>
-                  </membersControl>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} md={4}>
-  <input
-    accept="image/*"
-    type="file"
-    name="image"
-    onChange={handleImageChange}
-    style={{ marginTop: '16px' }}
-  />
-</Grid>
-
+                <Button variant="contained" component="label">
+                  Upload New Image
+                  <input type="file" hidden onChange={handleImageChange} />
+                </Button>
               </Grid>
-            </members>
+              </Grid>
+            </form>
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog} color="secondary">
               Cancel
             </Button>
-            <Button type="submit" members="updateMembermembers" variant="contained" color="primary">
+           <Button onClick={handleUpdate} variant="contained" color="primary">
               Update
             </Button>
           </DialogActions>

@@ -13,13 +13,14 @@ import { motion } from "framer-motion";
 import { Visibility, Delete, Edit, AssignmentInd, CalendarToday} from "@mui/icons-material";
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import {SITE_URI}  from '../Services/Config';
 
 
 const AddTeamLeader = () => {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [showTodaysTasks, setShowTodaysTasks] = useState(false);
-const [todaysTasks, setTodaysTasks] = useState([]);
+  const [todaysTasks, setTodaysTasks] = useState([]);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -289,7 +290,7 @@ const [todaysTasks, setTodaysTasks] = useState([]);
       </Grid>
     </Grid>
     {showForm ? (
-        <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+        <Paper elevation={3} sx={{ padding: 2, marginTop: 3 }}>
           <Typography variant="h5" gutterBottom>
             Create Leader
           </Typography>
@@ -425,11 +426,11 @@ const [todaysTasks, setTodaysTasks] = useState([]);
                         <Edit onClick={() => handleEditClick(leader)}
                         sx={{ color: "green", cursor: "pointer" }} />
                         <Delete variant="contained" onClick={() => handleDelete(leader.id)} sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }} />
-                          <Tooltip title="show today's task">
+                      <Tooltip title="show today's task">
                         <CalendarToday
                         color="success"
                         sx={{ cursor: 'pointer', ml: 1 }}
-                        onClick={() => navigate('/todays-tasks', { state: { leader } })}
+                        onClick={() => navigate(`${SITE_URI}/todays-tasks`, { state: { leader } })}
                       />
                       </Tooltip>
                       </TableCell>

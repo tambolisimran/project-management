@@ -16,6 +16,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser, forgotPassword, verifyOtp, resetPassword } from '../Services/APIServices';
+import { SITE_URI } from '../Services/Config';
+// import { SITE_URI } from '../Routing/NavRouting';
 
 // import { useAuth } from "./Layouts/ContextApi/AuthContext"
 
@@ -42,12 +44,22 @@ const AdminLogin = () => {
     try {
       const response = await loginUser(data.email, data.password);
       console.log(response.data)
-      // const { jwtToken, role } = response.data;
+      const { jwtToken, role ,id} = response.data;
       sessionStorage.setItem("token", response.data.jwtToken);
+      sessionStorage.setItem("token", jwtToken);
+    sessionStorage.setItem("role", role);
+      sessionStorage.setItem("id", id);
+       if (role === "TEAM_LEADER") {
+         const leaderId = response.data.id; 
+      sessionStorage.setItem("leaderId", leaderId);
+      sessionStorage.setItem("TEAM_LEADER", JSON.stringify(response.data));
+    }
       console.log('Full response:', response);
-        if (response.data.role === "ADMIN") navigate('/admin-dashboard');
-        else if (response.data.role === "TEAM_LEADER") navigate('/team-leader-dashboard');
-        else if (response.data.role === "TEAM_MEMBER") navigate('/member-dashboard');
+        if (response.data.role === "ADMIN") navigate(`${SITE_URI}/admin-dashboard`);
+        else if (response.data.role === "TEAM_LEADER") {
+        sessionStorage.setItem("TEAM_LEADER", JSON.stringify(response.data));
+        navigate(`${SITE_URI}/team-leader-dashboard`);
+}
     } catch (error) {
       console.error("Error in form submission:", error.response?.data || error.message);
     }
@@ -212,10 +224,16 @@ const AdminLogin = () => {
           </Button>
 
           <Typography>
-            <Link component="button" onClick={() => setOpenModal(true)}>
-              Forgot Password?
-            </Link>
+            <Box display="flex" justifyContent="space-between" mt={2}>
+              <Link component="button" onClick={() => setOpenModal(true)} sx={{ textDecoration: "underline", cursor: "pointer" }}>
+                Forgot Password?
+              </Link>
+              <Link to={`${SITE_URI}/register`} sx={{ fontWeight: "bold", textDecoration: "underline" }}>
+                Don't have account?
+              </Link>
+            </Box>
           </Typography>
+
         </form>
       </Box>
 

@@ -13,7 +13,6 @@ import {
   Table,
   TableHead,
   TableContainer,
-  Box,
   Container,
   Typography,
   Grid
@@ -37,7 +36,7 @@ const Branch = () => {
   const [branch, setBranch] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [add, setAdd] = useState({ role: "" });
+  const [add, setAdd] = useState({ branchName: "" });
 
   useEffect(() => {
     fetchBranches();
@@ -128,7 +127,7 @@ const Branch = () => {
               {showForm ? "Close Form" : "Add Branch"}
             </Button>
             {showForm ? (
-                    <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+                    <Paper elevation={3} sx={{ padding: 2, marginTop: 3 }}>
                       <Typography variant="h5" gutterBottom>
                         Create Branch
                       </Typography>

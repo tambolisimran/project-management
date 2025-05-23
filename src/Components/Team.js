@@ -22,21 +22,20 @@ import {
   addTeam,
   GetAllTeams,
   deleteTeam,
-  getTeamById,
   getAllBranches,
   GetAllDepartments,
   updateTeam,
 } from "../Services/APIServices";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
-import { Visibility, Edit, Delete } from "@mui/icons-material";
+import {Edit, Delete } from "@mui/icons-material";
 import { motion } from "framer-motion";
 
 const Team = () => {
+  const userRole = sessionStorage.getItem("role");
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
-  const [viewOpen, setViewOpen] = useState(false);
   const [teams, setTeams] = useState([]);
   const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
@@ -120,21 +119,6 @@ const Team = () => {
     }
   };
 
-  // const handleView = async (id) => {
-  //   try {
-  //     const response = await getTeamById(id);
-  //     if (response.data) {
-  //       setSelectedTeam(response.data);
-  //       setViewOpen(true);
-  //     } else {
-  //       Swal.fire("Error", "Team not found!", "error");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching team details", error);
-  //     Swal.fire("Error", "Failed to fetch team details.", "error");
-  //   }
-  // };
-
   const handleEdit = (team) => {
     setSelectedTeam(team);
     setUpdateOpen(true);
@@ -143,6 +127,7 @@ const Team = () => {
   const handleUpdate = async () => {
     try {
       const response = await updateTeam(selectedTeam.id, selectedTeam);
+      console.log("Updating team with:", selectedTeam);
       if (response.status === 200 || response.status === 204) {
         await fetchTeams();
         setUpdateOpen(false);
@@ -172,6 +157,7 @@ const Team = () => {
       >
         Back
       </Button>
+       {userRole === "ADMIN" && (
       <Button
         variant="contained"
         sx={{ mt: 5 }}
@@ -180,9 +166,9 @@ const Team = () => {
       >
         {showForm ? "Close Form" : "Add Team"}
       </Button>
-
+    )} 
       {showForm && (
-        <Paper elevation={3} sx={{ padding: 3, marginTop: 3 }}>
+        <Paper elevation={3} sx={{ padding: 2, marginTop: 3 }}>
           <Typography variant="h5" gutterBottom>
             Create Team
           </Typography>
@@ -230,6 +216,7 @@ const Team = () => {
                   </Select>
                 </FormControl>
               </Grid>
+              
               <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
                   Add Team
@@ -261,41 +248,48 @@ const Team = () => {
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth margin="dense">
-                  <InputLabel>Branch</InputLabel>
-                  <Select
-                    name="branchName"
-                    value={selectedTeam.branchName}
-                    onChange={(e) =>
-                      setSelectedTeam({ ...selectedTeam, branchName: e.target.value })
-                    }
-                  >
-                    {branches.map((branch) => (
-                      <MenuItem key={branch.id} value={branch.branchName}>
-                        {branch.branchName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <InputLabel shrink={true}>Branch</InputLabel>
+                <Select
+                  label="Branch"
+                  value={selectedTeam?.branchName || ""}
+                  onChange={(e) =>
+                    setSelectedTeam((prev) => ({
+                      ...prev,
+                      branchName: e.target.value,
+                    }))
+                  }
+                >
+                  {branches.map((branch) => (
+                    <MenuItem key={branch.id} value={branch.branchName}>
+                      {branch.branchName}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               </Grid>
               <Grid item xs={12} md={4}>
                 <FormControl fullWidth margin="dense">
-                  <InputLabel>Department</InputLabel>
-                  <Select
-                    name="department"
-                    value={selectedTeam.department}
-                    onChange={(e) =>
-                      setSelectedTeam({ ...selectedTeam, department: e.target.value })
-                    }
-                  >
-                    {departments.map((department) => (
-                      <MenuItem key={department.id} value={department.department}>
-                        {department.department}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <InputLabel shrink={true}>Department</InputLabel>
+                <Select
+                  label="Department"
+                  value={selectedTeam?.department || ""}
+                  onChange={(e) =>
+                    setSelectedTeam((prev) => ({
+                      ...prev,
+                      department: e.target.value,
+                    }))
+                  }
+                >
+                  {departments.map((dept) => (
+                    <MenuItem key={dept.id} value={dept.department}>
+                      {dept.department}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
               </Grid>
-              <Grid item xs={12}>
+              
+             <Grid item xs={12}>
                 <Button type="submit" variant="contained" color="primary" fullWidth>
                   Update Team
                 </Button>
@@ -338,10 +332,8 @@ const Team = () => {
                     <TableCell>{team.branchName}</TableCell>
                     <TableCell>{team.department}</TableCell>
                     <TableCell>
-                      {/* <Visibility
-                        onClick={() => handleView(team.id)}
-                        sx={{ color: "#3F51B5", cursor: "pointer", mr: 1 }}
-                      /> */}
+                      {userRole === "ADMIN" && (
+                      <>
                       <Delete
                         onClick={() => handleDelete(team.id)}
                         sx={{ color: "#D32F2F", cursor: "pointer", mr: 1 }}
@@ -350,6 +342,8 @@ const Team = () => {
                         onClick={() => handleEdit(team)}
                         sx={{ color: "green", cursor: "pointer" }}
                       />
+                      </>
+                    )}
                     </TableCell>
                   </TableRow>
                 ))}

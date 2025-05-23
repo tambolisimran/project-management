@@ -12,6 +12,7 @@ import { Visibility, VisibilityOff, Lock } from "@mui/icons-material";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../Services/APIServices";
+import { SITE_URI } from "../Services/Config";
 
 const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -36,7 +37,7 @@ const Register = () => {
         const response = await registerUser(data);
         console.log("Form submitted successfully", response); 
             alert("Registration successful as leader!");
-            navigate("/login");
+            navigate(`${SITE_URI}/login`);
         }
      catch (error) {
         console.error("Error submitting form:", error);
@@ -63,7 +64,7 @@ const Register = () => {
           <TextField fullWidth label="Confirm Password" margin="normal" {...register("confirmpassword", { required: "Confirm password is required", validate: (value) => value === password || "Passwords do not match" })} error={!!errors.confirmpassword} helperText={errors.confirmpassword?.message} type={showConfirmPassword ? "text" : "password"} InputProps={{ endAdornment: (<InputAdornment position="end"><IconButton onClick={handleClickShowConfirmPassword} edge="end">{showConfirmPassword ? <VisibilityOff /> : <Visibility />}</IconButton></InputAdornment>) }} />
 
           <Button type="submit" variant="contained" sx={{ backgroundColor: "#A5158C", color: "white", fontSize: "1rem", fontWeight: "bold", mt: 3, py: 1, "&:hover": { backgroundColor: "#E53888" } }}>Register</Button>
-        <Button onClick={()=>navigate("/login")} type="submit" variant="contained" sx={{ backgroundColor: "#A5158C", ml:3, color: "white", fontSize: "1rem", fontWeight: "bold", mt: 3, py: 1, "&:hover": { backgroundColor: "#E53888" } }}>Already Registered</Button>
+        <Button onClick={()=>navigate(`${SITE_URI}/login`)} type="submit" variant="contained" sx={{ backgroundColor: "#A5158C", ml:3, color: "white", fontSize: "1rem", fontWeight: "bold", mt: 3, py: 1, "&:hover": { backgroundColor: "#E53888" } }}>Already Registered</Button>
         </form>
       </Box>
     </Container>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { AppBar, Box, IconButton, Toolbar, Menu, MenuItem, Divider } from "@mui/material";
 import { AccountCircle, Home } from "@mui/icons-material"; 
 import { NavLink, useNavigate } from "react-router-dom"; // Add useNavigate
+import { SITE_URI } from "../Services/Config";
 
 const TopNavbar = () => {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -23,7 +24,7 @@ const TopNavbar = () => {
   const handleLogout = () => {
 
     localStorage.removeItem("authToken"); 
-    navigate("/login"); 
+    navigate(`${SITE_URI}`); 
     handleMenuClose(); 
   };
 
